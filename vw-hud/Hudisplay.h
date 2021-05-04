@@ -71,7 +71,7 @@ class Hudisplay {
     const uint8_t _getConsumptionInL(void) const;
     const uint8_t _fuelLoadToL(const uint8_t load) const;
 
-    const float _getAverageConsumptionInDlp100km(void) const;
+    const float _getAverageConsumptionInLp10km(void) const;
     const uint8_t _getAverageSpeedInKmph(void) const;
 
     virtual void _switchOff(void) =0;

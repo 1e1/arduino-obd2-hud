@@ -291,7 +291,7 @@ const uint8_t Hudisplay::_fuelLoadToL(const uint8_t load) const
 }
 
 
-const float Hudisplay::_getAverageConsumptionInDlp100km(void) const
+const float Hudisplay::_getAverageConsumptionInLp10km(void) const
 {
     const unsigned short lengthInHm = this->_getDistance();
     const uint8_t fuelBurnt = this->_getConsumptionInL();

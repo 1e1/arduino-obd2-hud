@@ -21,21 +21,24 @@ void Workflow::setHudisplay(Hudisplay* display)
 
 void Workflow::update(void)
 {
-  switch (this->_state) {
-    case Workflow::STATE_SHUTDOWN:
-      _sleep();
+  goto boot;
 
-    case Workflow::STATE_BOOT:
-      this->_state = _wakeup() ? Workflow::STATE_IDLE : Workflow::STATE_SHUTDOWN;
-      break;
+shutdown:
+  _sleep();
 
-    case Workflow::STATE_IDLE: 
-      this->_state = _idle() ? Workflow::STATE_DRIVE : Workflow::STATE_SHUTDOWN;
-      break;
+boot:
+  if (!this->_wakeup()) {
+    goto shutdown;
+  }
 
-    case Workflow::STATE_DRIVE:
-      this->_state = _drive() ? Workflow::STATE_IDLE : Workflow::STATE_SHUTDOWN;
-      break;
+idle:
+  if (!this->_idle()) {
+    goto shutdown;
+  }
+
+drive:
+  if (!this->_drive()) {
+    goto idle;
   }
 }
 

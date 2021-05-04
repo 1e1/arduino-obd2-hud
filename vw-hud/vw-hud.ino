@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <SPI.h>
 
 #define HUD_LOG_LEVEL 0
 #define HUD_USE_LED 1
@@ -35,12 +36,12 @@ void setup() {
   // CarEvent
   // =============================
   {
-    pinMode(DISPLAY_INT_CANBUS, INPUT);
+    pinMode(VH_INT_CANBUS, INPUT);
     
     /* */
     CarEventStream* bus = new CarEventStream;
-    SERIAL_PORT.begin(SERIAL_SPEED);
-    bus->setStream(SERIAL_PORT);
+    VH_SERIAL_PORT.begin(VH_SERIAL_SPEED);
+    bus->setStream(VH_SERIAL_PORT);
     /* */
     /* * /
     CarEventHardware* bus = new CarEventHardware;
@@ -48,7 +49,7 @@ void setup() {
     /* */
     /* * /
     CarEventCan* bus = new CarEventCan;
-    MCP_CAN mcp2515(DISPLAY_CHIP_SELECT_CANBUS);
+    MCP_CAN mcp2515(VH_CHIP_SELECT_CANBUS);
     mcp2515.begin(MCP_STD, CAN_500KBPS, MCP_8MHZ);
     bus->setBoard(&mcp2515);
     /* */
@@ -63,19 +64,19 @@ void setup() {
   {
     /* * /
     HudisplayStream* hud = new HudisplayStream;
-    SERIAL_PORT.begin(SERIAL_SPEED);
-    hud->setStream(SERIAL_PORT);
+    VH_SERIAL_PORT.begin(VH_SERIAL_SPEED);
+    hud->setStream(VH_SERIAL_PORT);
     /* */
     /* */
     Hudisplay128x64* hud = new Hudisplay128x64;
-    //U8G2_SSD1309_128X64_NONAME0_1_4W_SW_SPI hudBoard(U8G2_R0, DISPLAY_SPI_SCK, DISPLAY_SPI_MOSI, DISPLAY_CHIP_SELECT, DISPLAY_DATA_COMMAND, DISPLAY_RESET);
-    U8G2_SSD1309_128X64_NONAME0_2_4W_HW_SPI hudBoard(U8G2_R0, DISPLAY_CHIP_SELECT_SCREEN, DISPLAY_DATA_COMMAND, DISPLAY_RESET);
+    //U8G2_SSD1309_128X64_NONAME0_1_4W_SW_SPI hudBoard(U8G2_R0, VH_SPI_SCK, VH_SPI_MOSI, DISPLAY_CHIP_SELECT, VH_DATA_COMMAND, VH_RESET_SCREEN);
+    U8G2_SSD1309_128X64_NONAME0_2_4W_HW_SPI hudBoard(U8G2_R0, VH_CHIP_SELECT_SCREEN, VH_DATA_COMMAND, VH_RESET_SCREEN);
     hud->setBoard(&hudBoard);
     /* */
     /* * /
     Hudisplay128x64* hud = new Hudisplay128x64;
-    //U8G2_SSD1309_128X64_NONAME0_F_4W_SW_SPI hudBoard(U8G2_R0, DISPLAY_SPI_SCK, DISPLAY_SPI_MOSI, DISPLAY_CHIP_SELECT, DISPLAY_DATA_COMMAND, DISPLAY_RESET);
-    U8G2_SSD1309_128X64_NONAME0_F_4W_HW_SPI hudBoard(U8G2_R0, DISPLAY_CHIP_SELECT_SCREEN, DISPLAY_DATA_COMMAND, DISPLAY_RESET);
+    //U8G2_SSD1309_128X64_NONAME0_F_4W_SW_SPI hudBoard(U8G2_R0, VH_SPI_SCK, VH_SPI_MOSI, DISPLAY_CHIP_SELECT, VH_DATA_COMMAND, VH_RESET_SCREEN);
+    U8G2_SSD1309_128X64_NONAME0_F_4W_HW_SPI hudBoard(U8G2_R0, VH_CHIP_SELECT_SCREEN, VH_DATA_COMMAND, VH_RESET_SCREEN);
     hud->setBoard(&hudBoard);
     /* */
 

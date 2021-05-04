@@ -46,7 +46,7 @@ class HudisplayStream : public Hudisplay {
 
         case Hudisplay::PAGE_IDLE:
           this->_stream->print(F("avg consumption (dl/100km)="));
-          this->_stream->println(this->_getAverageConsumptionInDlp100km());
+          this->_stream->println(this->_getAverageConsumptionInLp10km());
           this->_stream->print(F("avg speed           (km/h)="));
           this->_stream->println(this->_getAverageSpeedInKmph());
           break;

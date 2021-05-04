@@ -24,7 +24,7 @@ void Hudisplay128x64::setBoard(U8G2* board)
     this->_board->setFontMode(1);
     this->_board->setFontPosBaseline();
 
-    #if DISPLAY_FULLBUFFER != 0
+    #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->clearBuffer();
     this->_board->sendBuffer();
     #endif
@@ -50,7 +50,7 @@ void Hudisplay128x64::_switchOff(void)
 
 void Hudisplay128x64::_update(void)
 {
-    #if DISPLAY_FULLBUFFER == 0
+    #if VH_DISPLAY_FULLBUFFER == 0
     this->_board->firstPage();
     do {
 
@@ -140,7 +140,7 @@ void Hudisplay128x64::_drawRpm(void)
     this->_board->setDrawColor(1); // 0, 1, 2=XOR
     if (this->_frameIndex%2) this->_board->drawFrame(0, 0, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
     #endif
-    #if DISPLAY_FULLBUFFER != 0
+    #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(0, 0, _SCREEN_WIDTH, _GAUGE_HEIGHT+2);
     #endif
 }
@@ -181,7 +181,7 @@ void Hudisplay128x64::_drawStats(void)
     }
 
     {
-        const float fuelInDlp100km = this->_getAverageConsumptionInDlp100km();
+        const float fuelInDlp100km = this->_getAverageConsumptionInLp10km();
         const uint8_t fuelInLp100km = (fuelInDlp100km / 10);
         const uint8_t fuelInLp100kmFloat = (fuelInDlp100km - (10 * fuelInLp100km));
         
@@ -199,7 +199,7 @@ void Hudisplay128x64::_drawStats(void)
     #if HUD_DISPLAY128X64_AREA_BLINK
     if (this->_frameIndex%2) this->_board->drawFrame(31, 2, _SCREEN_WIDTH-63, 34);
     #endif
-    #if DISPLAY_FULLBUFFER != 0
+    #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(34, 22-8, _SCREEN_WIDTH-64, 22);
     #endif
 }
@@ -221,7 +221,7 @@ void Hudisplay128x64::_drawSpeed(void)
     #if HUD_DISPLAY128X64_AREA_BLINK
     if (this->_frameIndex%2) this->_board->drawFrame(39, 42-28, _SCREEN_WIDTH- 2*39, 28);
     #endif
-    #if DISPLAY_FULLBUFFER != 0
+    #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(39, 42-28, _SCREEN_WIDTH- 2*39, 28);
     #endif
 }
@@ -247,7 +247,7 @@ void Hudisplay128x64::_drawMaxSpeed(void)
     #if HUD_DISPLAY128X64_AREA_BLINK
     if (this->_frameIndex%2) this->_board->drawFrame(111, 22-8, _SCREEN_WIDTH-111, 8);
     #endif
-    #if DISPLAY_FULLBUFFER != 0
+    #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(111, 22-8, _SCREEN_WIDTH-111, 8);
     #endif
 }
@@ -291,7 +291,7 @@ void Hudisplay128x64::_drawGearPosition(void)
     if (this->_frameIndex%2) this->_board->drawFrame(105, 32-8, _SCREEN_WIDTH-105, 8);
     if (this->_frameIndex%2) this->_board->drawFrame(0, 22-8, 23, 18);
     #endif
-    #if DISPLAY_FULLBUFFER != 0
+    #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(105, 32-8, _SCREEN_WIDTH-105, 8);
     this->_board->updateDisplayArea(0, 22-8, 23, 18);
     #endif
@@ -344,7 +344,7 @@ void Hudisplay128x64::_drawTrip(void)
     #if HUD_DISPLAY128X64_AREA_BLINK
     if (this->_frameIndex%2) this->_board->drawFrame(0, y0-6, _SCREEN_WIDTH, 6);
     #endif
-    #if DISPLAY_FULLBUFFER != 0
+    #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(0, y0-6, _SCREEN_WIDTH, 6); // TODO (0, 50) if fuel consumption
     #endif
 }
@@ -453,7 +453,7 @@ void Hudisplay128x64::_drawTank(void)
     this->_board->setDrawColor(1); // 0, 1, 2=XOR
     if (this->_frameIndex%2) this->_board->drawFrame(0, _SCREEN_HEIGHT-_GAUGE_HEIGHT-3, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
     #endif
-    #if DISPLAY_FULLBUFFER != 0
+    #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(0, _SCREEN_HEIGHT-_GAUGE_HEIGHT-3, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
     #endif
 }

@@ -1,0 +1,95 @@
+<html>
+    <head>
+        <script type="text/javascript" src="./scripts.js"></script>
+        <style>
+            code {
+                display: block;
+            }
+
+            code::before {
+                content: '0x';
+            }
+
+            tbody {
+                font-family: 'Courier New', Courier, monospace;
+            }
+
+            tr, td {
+                margin: 0;
+                padding: 0 1em;
+            }
+
+            tr:nth-child(odd) {
+                background-color: #CCC;
+            }
+
+            tr > td:first-child {
+                text-transform: uppercase;
+            }
+
+            tr > td:nth-child(odd) {
+                border-right: 1px solid #CCC;
+                text-align: right;
+            }
+
+            tr > td:nth-child(even) {
+                border-left: 1px solid #CCC;
+                text-align: left;
+            }
+
+            tr.fmin td:nth-child(4), tr.fequal td:nth-child(4) {
+                font-weight: bold;
+            }
+
+            tr.fmax td:nth-child(6), tr.fequal td:nth-child(6) {
+                font-weight: bold;
+            }
+
+            tr.hmin td:nth-child(8), tr.hequal td:nth-child(8) {
+                font-weight: bold;
+            }
+
+            tr.hmax td:nth-child(10), tr.hequal td:nth-child(10) {
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <button onclick="start().then(e=>{if(isRunning) this.disabled=true;})">⟛ connect</button>
+        <button onclick="window.open(toCsvUri());">⤓ .csv</button>
+        <table>
+            <thead>
+                <tr>
+                    <td>sid</td>
+                    <td>initial</td>
+                    <td>#</td>
+                    <td>min</td>
+                    <td>#</td>
+                    <td>max</td>
+                    <td>#</td>
+                    <td>min</td>
+                    <td>#</td>
+                    <td>max</td>
+                    <td>#</td>
+                </tr>
+            </thead>
+            <tbody id="logs">
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td>sid</td>
+                    <td>initial</td>
+                    <td>#</td>
+                    <td>min</td>
+                    <td>#</td>
+                    <td>max</td>
+                    <td>#</td>
+                    <td>min</td>
+                    <td>#</td>
+                    <td>max</td>
+                    <td>#</td>
+                </tr>
+            </tfoot>
+        </table>
+    </body>
+</html>

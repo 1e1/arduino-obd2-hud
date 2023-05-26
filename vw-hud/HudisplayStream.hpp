@@ -17,6 +17,7 @@ class HudisplayStream : public Hudisplay {
   protected:
   void _switchOn(void)  { this->_stream->println(F("* switchOn" )); this->_stream->flush(); };
   void _switchOff(void) { this->_stream->println(F("* switchOff")); this->_stream->flush(); };
+  void _setNightMode(const bool isNight) { this->_stream->print(F("* isNight=")); this->_stream->println(isNight); this->_stream->flush(); };
 
   void _update(void) {
     if (0 == this->_frameIndex) {
@@ -48,7 +49,7 @@ class HudisplayStream : public Hudisplay {
           this->_stream->print(F("avg consumption (dl/100km)="));
           this->_stream->println(this->_getAverageConsumptionInLp10km());
           this->_stream->print(F("avg speed           (km/h)="));
-          this->_stream->println(this->_getAverageSpeedInKmph());
+          this->_stream->println(this->_getAverageSpeedInKmh());
           break;
       }
 

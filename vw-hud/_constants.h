@@ -2,7 +2,9 @@
 #define constants_H_
 
 
-#define TANK_CAPACITY_MAX 70
+#define TANK_CAPACITY_MAX           70
+#define SCREEN_BRIGHTNESS_DAY       200
+#define SCREEN_BRIGHTNESS_NIGHT     100
 
 #define K_RATIO_FUEL_AIR_HYDROGEN   34.0
 #define K_RATIO_FUEL_AIR_NATURALGAS 17.2
@@ -19,7 +21,7 @@
 #define OBD_PID_TANK_LOAD           0x2F /* 1-byte */
 #define OBD_PID_ENGINE_FUEL_RATE    0x5E /* 2-bytes */
 #define OBD_PID_TORQUE_LOAD         0x62 /* 1-byte */
-#define OBD_PID_GEAR_POSITION       0xA4 /* 4-byte? */
+#define OBD_PID_GEAR_POSITION       0xA4 /* 4-bytes */
 #define OBD_PID_ODOMETER_VALUE      0xA6 /* 4-bytes */
 
 

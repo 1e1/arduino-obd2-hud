@@ -48,6 +48,12 @@ void Hudisplay128x64::_switchOff(void)
 }
 
 
+void Hudisplay128x64::_setNightMode(const bool isNight)
+{
+    this->_board->setContrast(isNight ? SCREEN_BRIGHTNESS_NIGHT : SCREEN_BRIGHTNESS_DAY);
+}
+
+
 void Hudisplay128x64::_update(void)
 {
     #if VH_DISPLAY_FULLBUFFER == 0
@@ -136,6 +142,14 @@ void Hudisplay128x64::_drawRpm(void)
     this->_board->setDrawColor(0); // 0, 1, 2=XOR
     this->_board->drawVLine(x1, 0, _GAUGE_HEIGHT+1);
 
+    /*
+    if (this->_getFuelConsumptionValue() < 0.1) { // TODO CONSTANTIZE
+        this->_board->drawVLine(_SCREEN_WIDTH-1, y0+1, _GAUGE_HEIGHT-2);
+        this->_board->drawHLine(x1+1, y0, _SCREEN_WIDTH-2);
+        this->_board->drawHLine(x1+1, _SCREEN_HEIGHT-1, _SCREEN_WIDTH-2);
+    }
+    */
+
     #if HUD_DISPLAY128X64_AREA_BLINK
     this->_board->setDrawColor(1); // 0, 1, 2=XOR
     if (this->_frameIndex%2) this->_board->drawFrame(0, 0, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
@@ -172,7 +186,7 @@ void Hudisplay128x64::_drawStats(void)
     }
 
     {
-        const uint8_t speedValue = this->_getAverageSpeedInKmph();
+        const uint8_t speedValue = this->_getAverageSpeedInKmh();
         const uint8_t speedLabelWidth = (fontWidth * strlen("### km/h")) - this->_offsetLabel3(speedValue, fontWidth);
 
         this->_board->setCursor((_SCREEN_WIDTH - speedLabelWidth)>>1, 22);

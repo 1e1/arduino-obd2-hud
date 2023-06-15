@@ -1,43 +1,104 @@
 
 const VH_SERIAL_SPEED = 115200;
 const BUFFER_SIZE = 256;
-const FRAME_SIZE = 12;
+const FRAME_SIZE = 15;
 const FRAME_START = 0xF0;
 const FRAME_END = 0xAA;
+
+const CLASSNAME_ISMARKED = 'isMarked';
+const LABEL_8BITS = 'b8';
+const LABEL_16BITS = 'b16';
 
 /* ================================================ */
 
 class Frame {
+    static get TYPE_SINGLEFRAME() {
+        return 0;
+    };
+
+    static get TYPE_FIRSTFRAME() {
+        return 1;
+    };
+    
+    static get TYPE_CONSECUTIVEFRAME() {
+        return 2;
+    };
+
+    static get TYPE_FLOWCONTROL() {
+        return 3;
+    };
+
+    static counter = 0;
+
     constructor() {
         this.buffer = new Uint8Array(FRAME_SIZE);
         this.reset();
     }
 
-    get sid() {
+    get index() {
+        return this.counter;
+    }
+
+    get pgn() {
         let dataview = new DataView(this.buffer.slice(0,4).buffer);
         return dataview.getUint32(0, false);
     }
 
-    get high() {
-        let dataview = new DataView(this.buffer.slice(4,8).buffer);
-        return dataview.getUint32(0, false);
+    get isRemoteRequest() {
+        return this.buffer[4];
     }
 
-    get low() {
-        let dataview = new DataView(this.buffer.slice(8,12).buffer);
-        return dataview.getUint32(0, false);
+    get isExtendedFrame() {
+        return this.buffer[5];
+    }
+
+    get packetLength() {
+        return this.buffer[6];
+    }
+
+    get type() {
+        return this.buffer[7] >> 3;
+    }
+
+    getDataLength() {
+        switch (this.type) {
+            case Frame.TYPE_SINGLEFRAME:
+                return this.buffer[7] & 7;
+            case Frame.TYPE_FIRSTFRAME:
+                return (shortLength << 8) + this.buffer[8];
+        }
+
+        return -1;
+    }
+
+    getSeqNum() {
+        if (this.type == Frame.TYPE_CONSECUTIVEFRAME) {
+            return this.buffer[7];
+        }
+
+        return -1;
+    }
+
+    getData() {
+        if (this.type == Frame.TYPE_FIRSTFRAME) {
+            return this.buffer.slice(9, 9+this.getDataLength());
+        }
+
+        return this.buffer.slice(8);
     }
 
     reset() {
         this.length = 0;
+        Frame.counter = Frame.counter + 1;
+        this.counter = Frame.counter;
     }
 
     isNew() {
-        return this.length == 0;
+        return 0 == this.length;
     }
 
-    isReady() {
-        return this.length == FRAME_SIZE;
+    isFull() {
+        return FRAME_SIZE == this.length;
     }
 
     free() {
@@ -50,20 +111,95 @@ class Frame {
     }
 }
 
-var log = {};
+class Message {
+    constructor(pgn, size, meta) {
+        this.pgn = pgn;
+        this.src = pgn & 0xFF;
+        this.data = new Uint8Array(size);
+        this.meta = meta;
+        this.length = 0;
+    }
+
+    isFull() {
+        return this.data.length == this.length;
+    }
+
+    free() {
+        return this.data.length - this.length;
+    }
+
+    amend(data) {
+        this.data.set(data, this.length);
+        this.length += data.length;
+    }
+}
+
+class MessageObd2 extends Message {
+    get sid() {
+        return this.data[0];
+    }
+
+    get pid8() {
+        return this.data[1];
+    }
+
+    get pid16() {
+        let dataview = new DataView(this.data.slice(1,3));
+        return dataview.getUint16(0, false);
+    }
+
+    getPid(isPid16) {
+        return isPid16 ? this.pid16 : this.pid8;
+    }
+
+    getData(isPid16) {
+        const offset = 2 + (true==isPid16);
+        return this.buffer.slice(offset);
+    }
+}
+
+var log = {
+    messages: [],
+};
+/**
+ * log = {
+ *  cerr: 123,
+ *  count: 12345,
+ *  frame.pgn: {
+ *      LABEL_8BITS: {
+ *          frame.pid8: [
+ *              *{ order: frame.counter, isMarked: isMarked, sid: frame.sid, length: frame.length, data: frame.data(false), }
+ *          ],
+ *      },
+ *      LABEL_16BITS: {
+ *          frame.pid16: [
+ *              *{ order: frame.counter, isMarked: isMarked, sid: frame.sid, length: frame.length, data: frame.data(true), }
+ *          ],
+ *      },
+ *  }
+ * }
+ */
 
 /* ================================================ */
 
 let port;
 let reader;
 let isRunning;
+let domBody;
 let domTBody;
-//let buffer;
-//let buffer = new ArrayBuffer(BUFFER_SIZE);
+let domOutputErrorCounter;
+let errorCounter = 0;
 let frame = new Frame();
+let message;
+let isMarked;
 
 window.addEventListener('load', e => {
-    domTBody = document.getElementById('logs');
+    let wordsToArray = str => str.split(',').map(i=>i.trim().toUpperCase());
+
+    domBody = document.querySelector('body');
+    domTBody = document.getElementById('trace');
+    domOutputErrorCounter = document.getElementById('cerr');
+    isMarked = document.getElementById('marker').checked;
 });
 
 /* ================================================ */
@@ -74,7 +210,6 @@ async function start() {
         if (port) {
             await port.open({ baudRate: VH_SERIAL_SPEED, bufferSize: BUFFER_SIZE });
             reader = port.readable.getReader({ mode: 'byob' });
-            //reader = port.readable.getReader();
             isRunning = true;
             run();
         }
@@ -92,19 +227,14 @@ async function terminate() {
 
 async function run() {
     while (isRunning && port.readable) {
-        //let buffer = new ArrayBuffer(BUFFER_SIZE);
         try {
             do {
                 const { value, done } = await reader.read(new Uint8Array(BUFFER_SIZE));
-                //const { value, done } = await reader.read();
                 if (done) {
                     reader.releaseLock();
                     break;
                 }
-                //buffer = value.buffer;
-                //console.log(value);
-
-                //await processSome(buffer);
+                
                 await processSome(value);
             } while(isRunning);
         } catch (error) {
@@ -121,34 +251,35 @@ async function processSome(buffer) {
     if (!frame.isNew()) {
         i = frame.free();
         frame.amend(buffer.slice(0,i));
-        if (frame.isReady()) {
+        if (frame.isFull()) {
             postFrame();
         } else {
-            console.error("unsynchronized (splitted)");
+            updateErrorCounter('unsynchronized (splitted)');
         }
-        while (buffer[i++] != FRAME_END && i<buffer.length);
+        while (i<buffer.length && buffer[i++] != FRAME_END);
         frame.reset();
     }
     // stuff some Frame
-    while (i < buffer.length-FRAME_SIZE) {
-        while (buffer[i++] != FRAME_START && i<buffer.length);
+    while (i < buffer.length-(FRAME_SIZE+2-1)) {
+        while (i<buffer.length && buffer[i++] != FRAME_START);
         if (i == buffer.length) {
             return;
         }
         frame.amend(buffer.slice(i,i+FRAME_SIZE));
         i+= FRAME_SIZE;
-        if (frame.isReady()) {
+        if (frame.isFull()) {
             postFrame();
         } else {
-            console.error("unsynchronized");
+            console.log(frame.length);
+            updateErrorCounter('unsynchronized');
         }
-        while (buffer[i++] != FRAME_END && i<buffer.length);
+        while (i<buffer.length && buffer[i++] != FRAME_END);
         frame.reset();
     }
 
     // prepare next Frame
     {
-        while (buffer[i++] != FRAME_START && i<buffer.length);
+        while (i<buffer.length && buffer[i++] != FRAME_START);
         if (i == buffer.length) {
             return;
         }
@@ -157,100 +288,57 @@ async function processSome(buffer) {
 }
 
 
+function updateErrorCounter(reason) {
+    console.error(reason);
+    domOutputErrorCounter.value = ++errorCounter;
+}
+
+
 async function postFrame() {
-    const sid = frame.sid;
-    const high = frame.high;
-    const low = frame.low;
-    const full = high * 0xFFFFFFFF + low;
+    switch (frame.type) {
+        case Frame.TYPE_SINGLEFRAME:
+            {
+                const meta = {
+                    isSingle: 1,
+                    isRemoteRequest: frame.isRemoteRequest,
+                    isExtendedFrame: frame.isExtendedFrame,
+                    isMarked: isMarked,
+                    index: frame.index,
+                };
 
-    if (log[sid]) {
-        let cache = log[sid];
-        cache._count = cache._count + 1;
-        
-        if (full < cache.fmin) {
-            cache.fmin = full;
-            cache.fminc = 1;
-        } else if (full > cache.fmax) {
-            cache.fmax = full;
-            cache.fmaxc = 1;
-        } else {
-            if (full == cache.fmin){
-                cache.fminc = cache.fminc + 1;
+                message = new Message(frame.pgn, frame.getDataLength(), meta);
+                message.amend(frame.getData());
             }
-            if (full == cache.fmax){
-                cache.fmaxc = cache.fmaxc + 1;
+            if (message.isFull()) {
+                log.messages.push(message);
+                drawTrMessage();
+            } else {
+                // throw error
             }
-        }
-        
-        if (high < cache.hmin) {
-            cache.hmin = high;
-            cache.hminc = 1;
-        } else if (high > cache.hmax) {
-            cache.hmax = high;
-            cache.hmaxc = 1;
-        } else {
-            if (high == cache.hmin){
-                cache.hminc = cache.hminc + 1;
+            break;
+        case Frame.TYPE_FIRSTFRAME: 
+            {
+                const meta = {
+                    isSingle: 0,
+                    isRemoteRequest: frame.isRemoteRequest,
+                    isExtendedFrame: frame.isExtendedFrame,
+                    isMarked: isMarked,
+                    index: frame.index,
+                };
+
+                message = new Message(frame.pgn, frame.getDataLength(), meta);
             }
-            if (high == cache.hmax){
-                cache.hmaxc = cache.hmaxc + 1;
+        case Frame.TYPE_CONSECUTIVEFRAME:
+            if (0 == message.free()) {
+                // throw error
             }
-        }
-    } else {
-        log[sid] = {
-            _initial: full,
-            _count: 1,
-            fmin : full,
-            fminc : 1,
-            fmax: full,
-            fmaxc: 1,
-            hmin: high,
-            hminc: 1,
-            hmax: high,
-            hmaxc: 1,
-        };
-    }
-
-    const cache = log[sid];
-    const hexId = sid.toString(16).toUpperCase();
-    const domId = `sid_${hexId}`;
-
-    let htmlTr = document.getElementById(domId);
-    let domTr = document.createElement('tr');
-    domTr.id = domId;
-
-    domTr.appendChild(createTd(hexId));
-    domTr.appendChild(createTdHex(cache._initial));
-    domTr.appendChild(createTd(cache._count));
-    domTr.appendChild(createTdHex(cache.fmin));
-    domTr.appendChild(createTd(cache.fminc));
-    domTr.appendChild(createTdHex(cache.fmax));
-    domTr.appendChild(createTd(cache.fmaxc));
-    domTr.appendChild(createTdHex(cache.hmin));
-    domTr.appendChild(createTd(cache.hminc));
-    domTr.appendChild(createTdHex(cache.hmax));
-    domTr.appendChild(createTd(cache.hmaxc));
-
-    if (cache.fminc < cache.fmaxc) {
-        domTr.classList.add('fmax');
-    } else if (cache.fminc > cache.fmaxc) {
-        domTr.classList.add('fmin');
-    } else {
-        domTr.classList.add('fequal');
-    }
-
-    if (cache.hminc < cache.hmaxc) {
-        domTr.classList.add('hmax');
-    } else if (cache.hminc > cache.hmaxc) {
-        domTr.classList.add('hmin');
-    } else {
-        domTr.classList.add('hequal');
-    }
+            message.amend(frame.getData().slice(0, message.free()));
     
-    if (htmlTr) {
-        domTBody.replaceChild(domTr, htmlTr);
-    } else {
-        domTBody.appendChild(domTr);
+            if (message.isFull()) {
+                log.messages.push(message);
+                drawTrMessage();
+            }
+            break;
     }
 }
 
@@ -265,31 +353,111 @@ function createTd(textNode) {
 }
 
 
-function createTdHex(textNode) {
+function createTdCode(...textNodes) {
     let td = document.createElement('td');
-    const raw = document.createTextNode(textNode);
-    const code = document.createElement('code');
-    const hex = document.createTextNode(textNode.toString(16).toUpperCase());
 
-    code.appendChild(hex);
+    textNodes.forEach((item, index) => {
+        const code = document.createElement('code');
+        const txt = document.createTextNode(String(item).toUpperCase());
 
-    td.appendChild(raw);
-    td.appendChild(code);
+        code.append(txt);
+        td.appendChild(code);
+    
+    });
 
     return td;
 }
 
 
-function toCsvUri() {
-    let csvContent = "data:text/csv;charset=utf-8,";
+async function drawTrMessage() {
+    let data, bin, dec, hex;
 
-    for (const [key, values] of Object.entries(log)) {
-        csvContent+= key + ',' + Object.values(values).join(',') + '\n';
+    if (message.length == 0) {
+        bin = '';
+        dec = '';
+        hex = '';
+    } else {
+        const arr = Array.from(message.data);
+        bin = arr.map(e=>('0000000'+e.toString(2)).slice(-8)).join(' ');
+        dec = arr.map(e=>('00'+e.toString(10)).slice(-3)).join(' ')
+        hex = arr.map(e=>('0'+e.toString(16)).slice(-2)).join(' ');
     }
-    
-    return encodeURI(csvContent);
+
+    let domTr = document.createElement('tr');
+    //domTr.classList.add('');
+    if (message.meta.isMarked) {
+        domTr.classList.add(CLASSNAME_ISMARKED);
+    }
+    domTr.dataset.groupId = message.pgn;
+    domTr.dataset.serviceId = message.data[0] || 'void';
+    domTr.dataset.parameterId = message.data[1] || 'void';
+
+    domTr.appendChild(createTd(String(message.meta.index)));
+    //domTr.appendChild(createTdCode(message.pgn.toString(16), message.pgn));
+    domTr.appendChild(createTdCode(message.src.toString(16), message.src));
+    //domTr.appendChild(createTd(String(message.meta.isSingle)));
+    //domTr.appendChild(createTd(String(message.meta.isRemoteRequest)));
+    //domTr.appendChild(createTd(String(message.meta.isExtendedFrame)));
+    domTr.appendChild(createTdCode(hex.substring(0,2), dec.substring(0,3)));
+    domTr.appendChild(createTdCode(hex.substring(3,5), dec.substring(4,7)));
+    domTr.appendChild(createTd(String(message.length)));
+    domTr.appendChild(createTdCode(hex));
+    domTr.appendChild(createTdCode(dec));
+    domTr.appendChild(createTdCode(bin));
+
+    //const isScrolledToBottom = domBody.scrollHeight - domBody.clientHeight <= domBody.scrollTop + 1;
+
+    domTBody.appendChild(domTr);
+    /*
+    if (isScrolledToBottom) {
+        domBody.scrollTop = domBody.scrollHeight - domBody.clientHeight;
+    }
+    */
 }
 
 
-// setInterval(run, 100);
-//run();
+async function removeGroupId(groupId) {
+    document.querySelectorAll('[data-group-id="'+groupId+'"]').forEach(i => {
+        i.parentNode.removeChild(i);
+    });
+}
+
+
+function toCsvUri() {
+    let csvContent = 'data:text/csv;charset=utf-8,index,isMarked,pgn,sourc,isSingle,isRemoteRequest,isExtendedFrame,length,hex,dec,bin\n';
+
+    log.messages.forEach(msg => {
+        const arr = Array.from(msg.data);
+        bin = arr.map(e=>('0000000'+e.toString(2)).slice(-8)).join(' ');
+        dec = arr.map(e=>('00'+e.toString(10)).slice(-3)).join(' ')
+        hex = arr.map(e=>('0'+e.toString(16)).slice(-2)).join(' ');
+
+        csvContent+= [msg.meta.index, msg.meta.isMarked, msg.pgn, msg.src, msg.meta.isSingle, msg.meta.isRemoteRequest, msg.meta.isExtendedFrame, msg.length, hex, dec, bin].join(',');
+        csvContent+= '\n';
+    });
+    /*
+    for (const pgn of Object.keys(log)) {
+        const pgnint = parseInt(pgn);
+        { // 8-bits
+            const label8bits = pgnWithPid8.includes(pgnint) ? 'is8bits' : 'if8bits'; 
+            for (const [pid, packets] of Object.entries(log[pgn][LABEL_8BITS])) {
+                packets.forEach(packet => {
+                    csvContent+= [pgn, label8bits, packet.sid, packet.order, pid, packet.isMarked, packet.length, packet.dec].join(',');
+                    csvContent+= '\n';
+                });
+            }
+        }
+        { // 16-bits
+            const label16bits = pgnWithPid16.includes(pgnint) ? 'is16bits' : 'if16bits'; 
+            for (const [pid, packets] of Object.entries(log[pgn][LABEL_16BITS])) {
+                packets.forEach(packet => {
+                    csvContent+= [pgn, label16bits, packet.sid, packet.order, pid, packet.isMarked, packet.length, packet.dec].join(',');
+                    csvContent+= '\n';
+                });
+            }
+        }
+    }
+    */
+    
+    return encodeURI(csvContent);
+}

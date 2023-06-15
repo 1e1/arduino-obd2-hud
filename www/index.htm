@@ -1,95 +1,51 @@
 <html>
     <head>
         <script type="text/javascript" src="./scripts.js"></script>
-        <style>
-            code {
-                display: block;
-            }
-
-            code::before {
-                content: '0x';
-            }
-
-            tbody {
-                font-family: 'Courier New', Courier, monospace;
-            }
-
-            tr, td {
-                margin: 0;
-                padding: 0 1em;
-            }
-
-            tr:nth-child(odd) {
-                background-color: #CCC;
-            }
-
-            tr > td:first-child {
-                text-transform: uppercase;
-            }
-
-            tr > td:nth-child(odd) {
-                border-right: 1px solid #CCC;
-                text-align: right;
-            }
-
-            tr > td:nth-child(even) {
-                border-left: 1px solid #CCC;
-                text-align: left;
-            }
-
-            tr.fmin td:nth-child(4), tr.fequal td:nth-child(4) {
-                font-weight: bold;
-            }
-
-            tr.fmax td:nth-child(6), tr.fequal td:nth-child(6) {
-                font-weight: bold;
-            }
-
-            tr.hmin td:nth-child(8), tr.hequal td:nth-child(8) {
-                font-weight: bold;
-            }
-
-            tr.hmax td:nth-child(10), tr.hequal td:nth-child(10) {
-                font-weight: bold;
-            }
-        </style>
+        <link rel="stylesheet" href="./style.css" />
     </head>
     <body>
-        <button onclick="start().then(e=>{if(isRunning) this.disabled=true;})">⟛ connect</button>
-        <button onclick="window.open(toCsvUri());">⤓ .csv</button>
+        <header>
+            <button onclick="start().then(e=>{if(isRunning) this.disabled=true;})">⟛ connect</button>
+            <button onclick="window.open(toCsvUri());">⤓ .csv</button>
+            <label class="marker"><input type="checkbox" id="marker" onchange="isMarked=this.checked"/> marker</label>
+            <label class="error"><output id="cerr" value="0">0</output> errors</label>
+        </header>
         <table>
             <thead>
                 <tr>
+                    <td>#</td>
+                    <!-- <td>mid</td> -->
+                    <td>src</td>
+                    <!-- <td>sgl</td> -->
+                    <!-- <td>rmt</td> -->
+                    <!-- <td>xtd</td> -->
                     <td>sid</td>
-                    <td>initial</td>
-                    <td>#</td>
-                    <td>min</td>
-                    <td>#</td>
-                    <td>max</td>
-                    <td>#</td>
-                    <td>min</td>
-                    <td>#</td>
-                    <td>max</td>
-                    <td>#</td>
+                    <td>pid</td>
+                    <td>L</td>
+                    <td>hex</td>
+                    <td>dec</td>
+                    <td>bin</td>
                 </tr>
             </thead>
-            <tbody id="logs">
+            <tbody id="trace">
             </tbody>
             <tfoot>
                 <tr>
+                    <td>#</td>
+                    <!-- <td>mid</td> -->
+                    <td>src</td>
+                    <!-- <td>sgl</td> -->
+                    <!-- <td>rmt</td> -->
+                    <!-- <td>xtd</td> -->
                     <td>sid</td>
-                    <td>initial</td>
-                    <td>#</td>
-                    <td>min</td>
-                    <td>#</td>
-                    <td>max</td>
-                    <td>#</td>
-                    <td>min</td>
-                    <td>#</td>
-                    <td>max</td>
-                    <td>#</td>
+                    <td>pid</td>
+                    <td>L</td>
+                    <td>hex</td>
+                    <td>dec</td>
+                    <td>bin</td>
                 </tr>
             </tfoot>
         </table>
+        <div href="bottom"></div>
     </body>
 </html>

@@ -1,0 +1,58 @@
+html {
+    background-color: white;
+}
+
+label {
+    margin: 2px 1em;
+    padding: 2px .5em;
+    background-color: whitesmoke;
+}
+
+code {
+    font-family: 'Courier New', Courier, monospace;
+    margin: 1px 1em;
+    padding: 1px;
+}
+
+code:nth-child(odd) {
+    background-color:lightgreen;
+}
+
+code:nth-child(even) {
+    background-color: mediumseagreen;
+}
+
+thead, tfoot {
+    position: sticky;
+}
+
+thead {
+    top: 0;
+}
+
+tfoot {
+    bottom: 0;
+}
+
+tr, td {
+    margin: 0;
+    padding: 0 1em;
+    border-left: 0 solid grey;
+}
+
+tr:nth-child(odd) {
+    background-color: lightgray;
+}
+
+tr.isMarked > td:nth-child(3) {
+    background-color: darkorange;
+    font-weight: bold;
+}
+
+td {
+    text-align: right;
+}
+ 
+td:nth-child(n+7) {
+    text-align: left;
+}

@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <script type="text/javascript" src="./scripts.js"></script>
+        <link rel="stylesheet" href="./style.css" />
+    </head>
+    <body>
+        <header>
+            <button onclick="start().then(e=>{if(isRunning) this.disabled=true;})">⟛ connect</button>
+            <button onclick="window.open(toCsvUri());">⤓ .csv</button>
+            <label class="marker"><input type="checkbox" id="marker" onchange="isMarked=this.checked"/> marker</label>
+            <label class="error"><output id="cerr" value="0">0</output> errors</label>
+        </header>
+        <table>
+            <thead>
+                <tr>
+                    <td>#</td>
+                    <!-- <td>mid</td> -->
+                    <td>src</td>
+                    <!-- <td>sgl</td> -->
+                    <!-- <td>rmt</td> -->
+                    <!-- <td>xtd</td> -->
+                    <td>sid</td>
+                    <td>pid</td>
+                    <td>L</td>
+                    <td>hex</td>
+                    <td>dec</td>
+                    <td>bin</td>
+                </tr>
+            </thead>
+            <tbody id="trace">
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td>#</td>
+                    <!-- <td>mid</td> -->
+                    <td>src</td>
+                    <!-- <td>sgl</td> -->
+                    <!-- <td>rmt</td> -->
+                    <!-- <td>xtd</td> -->
+                    <td>sid</td>
+                    <td>pid</td>
+                    <td>L</td>
+                    <td>hex</td>
+                    <td>dec</td>
+                    <td>bin</td>
+                </tr>
+            </tfoot>
+        </table>
+        <div href="bottom"></div>
+    </body>
+</html>

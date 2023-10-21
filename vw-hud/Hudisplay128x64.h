@@ -20,6 +20,7 @@ class Hudisplay128x64 : public Hudisplay {
 
   void _switchOn(void);
   void _switchOff(void);
+  void _setNightMode(const bool isNight);
   void _update(void);
 
   void _drawRpm(void);

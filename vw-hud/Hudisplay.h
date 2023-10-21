@@ -35,6 +35,7 @@ class Hudisplay {
     void setPage(const Page page);
     void switchOn(void);
     void switchOff(void);
+    void setNightMode(const bool isNight);
 
     void setTankCapacity(const uint8_t current /* l: 0-255 */);
     void setTankLoad(const uint8_t current /* % base 255: 0-255 */);
@@ -71,11 +72,12 @@ class Hudisplay {
     const uint8_t _getConsumptionInL(void) const;
     const uint8_t _fuelLoadToL(const uint8_t load) const;
 
-    const float _getAverageConsumptionInDlp100km(void) const;
-    const uint8_t _getAverageSpeedInKmph(void) const;
+    const float _getAverageConsumptionInLp10km(void) const;
+    const uint8_t _getAverageSpeedInKmh(void) const;
 
     virtual void _switchOff(void) =0;
     virtual void _switchOn(void) =0;
+    virtual void _setNightMode(const bool isNight) =0;
     virtual void _update(void) =0;
 
     Page _page;

@@ -36,7 +36,6 @@ class Workflow {
   const bool _drive(void) const;
 
 
-  State _state = STATE_BOOT;
   CarEvent* _bus = nullptr;
   Hudisplay* _display = nullptr;
 

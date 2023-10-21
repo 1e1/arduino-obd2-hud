@@ -96,7 +96,7 @@ void CarEventCan::_switchOff(void)
 
 void CarEventCan::_update(void)
 {
-    //if(!digitalRead(DISPLAY_INT_CANBUS)) {
+    //if(!digitalRead(VH_INT_CANBUS)) {
         if (CAN_OK == this->_board->readMsgBuf(&this->_rxId, &this->_bufferLength, this->_buffer)) {
             const byte pid = this->_buffer[2];
 

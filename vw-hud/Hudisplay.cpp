@@ -29,6 +29,12 @@ void Hudisplay::switchOff()
 }
 
 
+void Hudisplay::setNightMode(const bool isNight)
+{
+    this->_setNightMode(isNight);
+}
+
+
 void Hudisplay::setTankCapacity(const uint8_t current)
 {
     this->_currentTankCapacity = current;
@@ -257,7 +263,7 @@ const unsigned long Hudisplay::_getDistance(void) const
 
 const unsigned short Hudisplay::_millisIn4s(void) const
 {
-    return int(this->_nextFrameTimeMs >> 12);
+    return (unsigned short) (this->_nextFrameTimeMs >> 12);
 }
 
 
@@ -291,7 +297,7 @@ const uint8_t Hudisplay::_fuelLoadToL(const uint8_t load) const
 }
 
 
-const float Hudisplay::_getAverageConsumptionInDlp100km(void) const
+const float Hudisplay::_getAverageConsumptionInLp10km(void) const
 {
     const unsigned short lengthInHm = this->_getDistance();
     const uint8_t fuelBurnt = this->_getConsumptionInL();
@@ -301,7 +307,7 @@ const float Hudisplay::_getAverageConsumptionInDlp100km(void) const
 }
 
 
-const uint8_t Hudisplay::_getAverageSpeedInKmph(void) const
+const uint8_t Hudisplay::_getAverageSpeedInKmh(void) const
 {
     const unsigned short lengthInHm = this->_getDistance();
     const unsigned short durationInMinutes = this->_getDuration() / 15;

@@ -7,6 +7,7 @@
         <header>
             <button onclick="start().then(e=>{if(isRunning) this.disabled=true;})">⟛ connect</button>
             <button onclick="window.open(toCsvUri());">⤓ .csv</button>
+            <button onclick="window.open(toCandumpUri());">⤓ .log</button>
             <label class="marker"><input type="checkbox" id="marker" onchange="isMarked=this.checked"/> marker</label>
             <label class="error"><output id="cerr" value="0">0</output> errors</label>
         </header>

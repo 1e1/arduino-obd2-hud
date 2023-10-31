@@ -11,6 +11,11 @@ const LABEL_16BITS = 'b16';
 
 /* ================================================ */
 
+class Tty {
+    // std: Type{1}Identifier{3}Length{1}Data{0,8}Timestamp{4}?\r
+    // xtd: Type{1}Identifier{8}Length{1}Data{0,8}Timestamp{4}?\r
+}
+
 class Frame {
     static get TYPE_SINGLEFRAME() {
         return 0;
@@ -57,15 +62,15 @@ class Frame {
     }
 
     get type() {
-        return this.buffer[7] >> 3;
+        return this.buffer[7] >> 4;
     }
 
     getDataLength() {
         switch (this.type) {
             case Frame.TYPE_SINGLEFRAME:
-                return this.buffer[7] & 7;
+                return (this.buffer[7] & 0xF);
             case Frame.TYPE_FIRSTFRAME:
-                return (shortLength << 8) + this.buffer[8];
+                return ((this.buffer[7] & 0xF) << 8) + this.buffer[8];
         }
 
         return -1;
@@ -80,10 +85,6 @@ class Frame {
     }
 
     getData() {
-        if (this.type == Frame.TYPE_FIRSTFRAME) {
-            return this.buffer.slice(9, 9+this.getDataLength());
-        }
-
         return this.buffer.slice(8);
     }
 
@@ -307,7 +308,7 @@ async function postFrame() {
                 };
 
                 message = new Message(frame.pgn, frame.getDataLength(), meta);
-                message.amend(frame.getData());
+                message.amend(frame.getData().slice(0, message.free()));
             }
             if (message.isFull()) {
                 log.messages.push(message);
@@ -329,8 +330,8 @@ async function postFrame() {
                 message = new Message(frame.pgn, frame.getDataLength(), meta);
             }
         case Frame.TYPE_CONSECUTIVEFRAME:
-            if (0 == message.free()) {
-                // throw error
+            if (message.free() < frame.getDataLength()) {
+                console.error('frame => message too small', frame, message);
             }
             message.amend(frame.getData().slice(0, message.free()));
     
@@ -424,13 +425,13 @@ async function removeGroupId(groupId) {
 
 
 function toCsvUri() {
-    let csvContent = 'data:text/csv;charset=utf-8,index,isMarked,pgn,sourc,isSingle,isRemoteRequest,isExtendedFrame,length,hex,dec,bin\n';
+    let csvContent = 'data:text/csv;charset=utf-8,index,isMarked,pgn,source,isSingle,isRemoteRequest,isExtendedFrame,length,hex,dec,bin\n';
 
     log.messages.forEach(msg => {
         const arr = Array.from(msg.data);
-        bin = arr.map(e=>('0000000'+e.toString(2)).slice(-8)).join(' ');
-        dec = arr.map(e=>('00'+e.toString(10)).slice(-3)).join(' ')
-        hex = arr.map(e=>('0'+e.toString(16)).slice(-2)).join(' ');
+        const bin = arr.map(e=>('0000000'+e.toString(2)).slice(-8)).join(' ');
+        const dec = arr.map(e=>('00'+e.toString(10)).slice(-3)).join(' ')
+        const hex = arr.map(e=>('0'+e.toString(16)).slice(-2)).join(' ');
 
         csvContent+= [msg.meta.index, msg.meta.isMarked, msg.pgn, msg.src, msg.meta.isSingle, msg.meta.isRemoteRequest, msg.meta.isExtendedFrame, msg.length, hex, dec, bin].join(',');
         csvContent+= '\n';
@@ -460,4 +461,18 @@ function toCsvUri() {
     */
     
     return encodeURI(csvContent);
+}
+
+
+function toCandumpUri() {
+    let dumpContent = 'data:text/plain;charset=utf-8\n';
+
+    log.messages.forEach(msg => {
+        const pgn = ('00'+msg.pgn.toString(16)).slice(-3);
+        const hex = Array.from(msg.data).map(e=>('0'+e.toString(16)).slice(-2)).join('');
+
+        dumpContent+= `(${msg.meta.index} vcan0 ${pgn}#${hex})\n`;
+    });
+    
+    return encodeURI(dumpContent);
 }

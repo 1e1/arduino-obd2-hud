@@ -8,11 +8,12 @@
 #define MODE_TEST                   3
 
 #define VH_SERIAL_PORT              Serial
-#define VH_SERIAL_SPEED             115200
+// #define VH_SERIAL_SPEED             115200
+#define VH_SERIAL_SPEED             500000
 #define __USE_MEGA__                1
 #define __USE_MODE__                MODE_PRODUCTION
 #define FRAME_START                 0xF0
-#define FRAME_END                   0xAA
+#define FRAME_END                   '\r'
 
 #if __USE_NANO__
 #define VH_SCK                      13

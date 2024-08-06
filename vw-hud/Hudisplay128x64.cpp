@@ -8,6 +8,11 @@ static const uint8_t _SCREEN_HEIGHT = 64;
 
 
 
+#define UD_DISPLAY128X64_AREA_BLINKING_ON  (this->_frameIndex <  (this->HISTORY_FRAME_SIZE >> 1))
+#define UD_DISPLAY128X64_AREA_BLINKING_OFF (this->_frameIndex >= (this->HISTORY_FRAME_SIZE >> 1))
+
+
+
 // ==============================================
 // PUBLIC
 // ==============================================
@@ -60,21 +65,21 @@ void Hudisplay128x64::_update(void)
     this->_board->firstPage();
     do {
 
-    switch (this->_page) {
-        case Hudisplay::PAGE_DRIVING:
-            this->_drawRpm();               // high fps
-            this->_drawSpeed();             // avg fps
-            this->_drawMaxSpeed();          // low fps
-            this->_drawGearPosition();      // low fps
-            break;
+        switch (this->_page) {
+            case Hudisplay::PAGE_DRIVING:
+                this->_drawRpm();               // high fps
+                this->_drawSpeed();             // avg fps
+                this->_drawMaxSpeed();          // low fps
+                this->_drawGearPosition();      // low fps
+                break;
 
-        case Hudisplay::PAGE_IDLE:
-            this->_drawStats();     // avg fps
-            break;
-    }
+            case Hudisplay::PAGE_IDLE:
+                this->_drawStats();     // avg fps
+                break;
+        }
 
-    this->_drawTrip(); // low fps
-    this->_drawTank(); // high fps if Fuel Consumption
+        this->_drawTrip(); // low fps
+        this->_drawTank(); // high fps if Fuel Consumption
 
     } while (this->_board->nextPage());
 
@@ -83,28 +88,52 @@ void Hudisplay128x64::_update(void)
 
     switch (this->_page) {
         case Hudisplay::PAGE_DRIVING:
-            this->_drawRpm();    // high fps
-            if (this->_frameIndex & 0b1 == 0) {
-                this->_drawSpeed();  // avg fps
-            }
-            if (this->_frameIndex == 0) {
-                this->_drawMaxSpeed();   // low fps
-            }
-            if (this->_frameIndex == (this->HISTORY_FRAME_SIZE >> 1)) {
-                this->_drawTrip(); // low fps
-            }
-            if (this->_frameIndex == (this->HISTORY_FRAME_SIZE >> 2)) {
-                this->_drawGearPosition(); // low fps
+            // high fps: 1/1
+            this->_drawRpm();
+            
+            // avg fps: 1/2
+            if (this->_frameIndex & 0b1) {
+                this->_drawSpeed();
+            } else {
+                // low fps: 1/8
+                switch (this->frameIndex & 0b110) {
+                    case 0b000:
+                        this->_drawMaxSpeed();
+                        break;
+                    case 0b010:
+                        this->_drawTrip()
+                        break;
+                    case 0b100:
+                        this->_drawGearPosition();
+                        break;
+                    case 0b110:
+                        this->_drawTank();
+                        break;
+                }
             }
             break;
 
         case Hudisplay::PAGE_IDLE:
-            this->_drawStats(); // avg fps
-            this->_drawTrip();  // low fps
+            // high fps: 1/1
+            // -- not yet
+            
+            // avg fps: 1/2
+            if (this->_frameIndex & 0b1) {
+                this->_drawStats();
+            } else {
+                // low fps: 1/4
+                switch (this->frameIndex & 0b10) {
+                    case 0b00:
+                        this->_drawTrip();
+                        break;
+                    case 0b10:
+                        this->_drawTank();
+                        break;
+            }
             break;
     }
 
-    this->_drawTank(); // high fps if Fuel Consumption
+    // this->_drawTank(); // high fps if Fuel Consumption
     #endif
 }
 
@@ -152,7 +181,7 @@ void Hudisplay128x64::_drawRpm(void)
 
     #if HUD_DISPLAY128X64_AREA_BLINK
     this->_board->setDrawColor(1); // 0, 1, 2=XOR
-    if (this->_frameIndex%2) this->_board->drawFrame(0, 0, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
+    if (HUD_DISPLAY128X64_AREA_BLINKING_ON) this->_board->drawFrame(0, 0, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
     #endif
     #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(0, 0, _SCREEN_WIDTH, _GAUGE_HEIGHT+2);
@@ -211,7 +240,7 @@ void Hudisplay128x64::_drawStats(void)
     }
     
     #if HUD_DISPLAY128X64_AREA_BLINK
-    if (this->_frameIndex%2) this->_board->drawFrame(31, 2, _SCREEN_WIDTH-63, 34);
+    if (HUD_DISPLAY128X64_AREA_BLINKING_ON) this->_board->drawFrame(31, 2, _SCREEN_WIDTH-63, 34);
     #endif
     #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(34, 22-8, _SCREEN_WIDTH-64, 22);
@@ -233,7 +262,7 @@ void Hudisplay128x64::_drawSpeed(void)
     this->_board->drawStr(37+xoffset, 42, speedLabel);
     
     #if HUD_DISPLAY128X64_AREA_BLINK
-    if (this->_frameIndex%2) this->_board->drawFrame(39, 42-28, _SCREEN_WIDTH- 2*39, 28);
+    if (HUD_DISPLAY128X64_AREA_BLINKING_ON) this->_board->drawFrame(39, 42-28, _SCREEN_WIDTH- 2*39, 28);
     #endif
     #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(39, 42-28, _SCREEN_WIDTH- 2*39, 28);
@@ -259,7 +288,7 @@ void Hudisplay128x64::_drawMaxSpeed(void)
     }
     
     #if HUD_DISPLAY128X64_AREA_BLINK
-    if (this->_frameIndex%2) this->_board->drawFrame(111, 22-8, _SCREEN_WIDTH-111, 8);
+    if (HUD_DISPLAY128X64_AREA_BLINKING_ON) this->_board->drawFrame(111, 22-8, _SCREEN_WIDTH-111, 8);
     #endif
     #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(111, 22-8, _SCREEN_WIDTH-111, 8);
@@ -302,8 +331,8 @@ void Hudisplay128x64::_drawGearPosition(void)
     }
     
     #if HUD_DISPLAY128X64_AREA_BLINK
-    if (this->_frameIndex%2) this->_board->drawFrame(105, 32-8, _SCREEN_WIDTH-105, 8);
-    if (this->_frameIndex%2) this->_board->drawFrame(0, 22-8, 23, 18);
+    if (HUD_DISPLAY128X64_AREA_BLINKING_ON) this->_board->drawFrame(105, 32-8, _SCREEN_WIDTH-105, 8);
+    if (HUD_DISPLAY128X64_AREA_BLINKING_ON) this->_board->drawFrame(0, 22-8, 23, 18);
     #endif
     #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(105, 32-8, _SCREEN_WIDTH-105, 8);
@@ -356,7 +385,7 @@ void Hudisplay128x64::_drawTrip(void)
         this->_board->print(u8x8_u8toa(minutes, 2));
     }
     #if HUD_DISPLAY128X64_AREA_BLINK
-    if (this->_frameIndex%2) this->_board->drawFrame(0, y0-6, _SCREEN_WIDTH, 6);
+    if (HUD_DISPLAY128X64_AREA_BLINKING_ON) this->_board->drawFrame(0, y0-6, _SCREEN_WIDTH, 6);
     #endif
     #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(0, y0-6, _SCREEN_WIDTH, 6); // TODO (0, 50) if fuel consumption
@@ -465,7 +494,7 @@ void Hudisplay128x64::_drawTank(void)
 
     #if HUD_DISPLAY128X64_AREA_BLINK
     this->_board->setDrawColor(1); // 0, 1, 2=XOR
-    if (this->_frameIndex%2) this->_board->drawFrame(0, _SCREEN_HEIGHT-_GAUGE_HEIGHT-3, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
+    if (HUD_DISPLAY128X64_AREA_BLINKING_ON) this->_board->drawFrame(0, _SCREEN_HEIGHT-_GAUGE_HEIGHT-3, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
     #endif
     #if VH_DISPLAY_FULLBUFFER != 0
     this->_board->updateDisplayArea(0, _SCREEN_HEIGHT-_GAUGE_HEIGHT-3, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);

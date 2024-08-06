@@ -19,6 +19,7 @@ class Hudisplay {
     public:
     static const uint8_t HISTORY_FRAME_SIZE = HUDISPLAY_HISTORY_FRAME_SIZE;
     static const uint8_t FRAME_DURATION_MS = HUDISPLAY_FRAME_DURATION_MS;
+    static const uint8_t RPM_SHIFT = 8;
 
     typedef enum { 
         PAGE_NONE, 
@@ -64,6 +65,7 @@ class Hudisplay {
     const uint8_t _retrieveMin(uint8_t* valueList) const;
     const uint8_t _retrieveMax(MinMax* minMax) const;
     const uint8_t _retrieveMax(uint8_t* valueList) const;
+    const MinMax _retrieveMinMax(uint8_t* valueList) const;
     const unsigned long _getDistance(void) const;
     const unsigned short _millisIn4s(void) const;
     const unsigned short _getDuration() const;
@@ -74,6 +76,8 @@ class Hudisplay {
 
     const float _getAverageConsumptionInLp10km(void) const;
     const uint8_t _getAverageSpeedInKmh(void) const;
+
+    const bool _isStationary(void) const;
 
     virtual void _switchOff(void) =0;
     virtual void _switchOn(void) =0;
@@ -96,8 +100,11 @@ class Hudisplay {
     //MinMax _rpmList[HISTORY_FRAME_SIZE];
     //MinMax _speedList[HISTORY_FRAME_SIZE];    // TODO single list (max)
     //MinMax _consumptionList[HISTORY_FRAME_SIZE];
+    MinMax _rpmMinMax;
     uint8_t _rpmList[HISTORY_FRAME_SIZE];
+    MinMax _speedMinMax;
     uint8_t _speedList[HISTORY_FRAME_SIZE];    // TODO single list (max)
+    //MinMax _consumptionMinMax;
     uint8_t _consumptionList[HISTORY_FRAME_SIZE];
 };
 

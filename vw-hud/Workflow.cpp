@@ -21,25 +21,11 @@ void Workflow::setHudisplay(Hudisplay* display)
 
 void Workflow::update(void)
 {
-  goto boot;
+  if (this->_wakeup()) {
+    this->_drive();
+  }
 
-shutdown:
   _sleep();
-
-boot:
-  if (!this->_wakeup()) {
-    goto shutdown;
-  }
-
-idle:
-  if (!this->_idle()) {
-    goto shutdown;
-  }
-
-drive:
-  if (!this->_drive()) {
-    goto idle;
-  }
 }
 
 
@@ -104,51 +90,10 @@ const bool Workflow::_wakeup(void) const
 }
 
 
-const bool Workflow::_idle(void) const
-{
-  this->_bus->setMode(CarEvent::MODE_IDLE);
-  this->_display->setPage(Hudisplay::PAGE_IDLE);
-
-  this->_display->animationFrame();
-  do {
-    this->_bus->update();
-    
-    switch (this->_bus->getSensor()) {
-      case CarEvent::SENSOR_RPM: 
-        this->_display->setRpmValue(this->_bus->getRpmValue());
-        return true;
-      /*
-      case CarEvent::SENSOR_HANDBRAKE_POSITION: 
-        if (this->_bus->getHandbrakePosition() == 0) {
-          return true;
-        }
-        break;
-      */
-      /*
-      case CarEvent::MSG_KEY_POSITION: 
-        return STATE_SHUTDOWN;
-      */
-
-      case CarEvent::SENSOR_NONE: 
-        Energy.standby(PowerManager::T_32MS);
-        break;
-
-      case CarEvent::SENSOR_TIMEOUT: 
-        return false;
-    }
-
-    // waitUntilEvent
-    // | rpm > 0 )) _start()
-    // | key(off))) _sleep()
-    // | deepSleep(1s)
-  } while (true);
-}
-
-
-const bool Workflow::_drive(void) const
+void Workflow::_drive(void) const
 {
   this->_bus->setMode(CarEvent::MODE_DRIVING);
-  this->_display->setPage(Hudisplay::PAGE_DRIVING);
+  this->_display->setPage(Hudisplay::PAGE_DRIVING); // TODO REMOVE
 
   do {
     this->_bus->update();
@@ -164,11 +109,6 @@ const bool Workflow::_drive(void) const
 
       case CarEvent::SENSOR_RPM: 
         this->_display->setRpmValue(this->_bus->getRpmValue());
-
-        // TODO REMOVE hack if Handbrake
-        if (0 == this->_bus->getRpmValue()) {
-          return false;
-        }
         break;
 
       case CarEvent::SENSOR_VEHICLE_SPEED: 
@@ -190,17 +130,13 @@ const bool Workflow::_drive(void) const
       case CarEvent::SENSOR_GEAR_POSITION: 
         this->_display->setGearPosition(this->_bus->getGearPosition());
         break;
-      case CarEvent::SENSOR_HANDBRAKE_POSITION: 
-        if (this->_bus->getHandbrakePosition() != 0) {
-          return true;
-        }
-        break;
+        
       case CarEvent::SENSOR_NONE: 
         Energy.standby(PowerManager::T_16MS);
         break;
 
       case CarEvent::SENSOR_TIMEOUT: 
-        return false;
+        return;
     }
 
     this->_display->requestAnimationFrame(Energy.realMillis());

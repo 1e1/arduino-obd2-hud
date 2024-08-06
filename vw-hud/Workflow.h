@@ -32,8 +32,7 @@ class Workflow {
 
   void _sleep(void) const;
   const bool _wakeup(void) const;
-  const bool _idle(void) const;
-  const bool _drive(void) const;
+  void _drive(void) const;
 
 
   CarEvent* _bus = nullptr;

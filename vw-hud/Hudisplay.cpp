@@ -65,7 +65,7 @@ void Hudisplay::setRpmValue(const unsigned short current)
     // 255*16 = 16,320
     // rpm = k * (current >> 8) [0-511]
     // k = 32
-    const uint8_t rpmValueInDiv64 = current >> 8;
+    const uint8_t rpmValueInDiv64 = current >> this->RPM_SHIFT;
 
     //this->_currentRpmValueInDiv64 = rpmValueInDiv64;
 
@@ -102,6 +102,15 @@ const bool Hudisplay::requestAnimationFrame(const unsigned long now)
     }
 
     this->_nextFrameTimeMs = now + this->FRAME_DURATION_MS;
+
+    this->_rpmMinMax = this->_retrieveMinMax(this->_rpmList);
+    this->_speedMinMax = this->_retrieveMinMax(this->_speedList);
+
+    if (this->_isStationary()) {
+        this->setPage(Hudisplay::PAGE_IDLE);
+    } else {
+        this->setPage(Hudisplay::PAGE_DRIVING);
+    }
 
     this->animationFrame();
 
@@ -254,6 +263,24 @@ const uint8_t Hudisplay::_retrieveMax(uint8_t* valueList) const
     return max;
 }
 
+const MinMax Hudisplay::_retrieveMinMax(uint8_t* valueList) const
+{
+    MinMax out {
+        .min = valueList[0],
+        .max = valueList[0]
+    }
+
+    for (uint8_t i=1; i<this->HISTORY_FRAME_SIZE; ++i) {
+        if (out.max < valueList[i]) {
+            out.max = valueList[i];
+        } else if (out.min > valueList[i]) {
+            out.min = valueList[i];
+        }
+    }
+
+    return out;
+}
+
 
 const unsigned long Hudisplay::_getDistance(void) const
 {
@@ -314,4 +341,14 @@ const uint8_t Hudisplay::_getAverageSpeedInKmh(void) const
     // speed = (lengthInHm / 10) / (durationInMinutes / 60)
     
     return 6 * lengthInHm / durationInMinutes;
+}
+
+const bool Hudisplay::_isStationary(void) const
+{
+    return (this->_rpmMinMax.max == 0) 
+        || (this->_speedMinMax.max == 0)
+        && (this->_speedMinMax.min == this->_speedMinMax.max)
+        // DATA RPM = (256A + B)/4
+        // 128rpm => DATA 128*4
+        && (this->_rpmMinMax.min + ((128*4)>>this->RPM_SHIFT) => this->_rpmMinMax.max);
 }

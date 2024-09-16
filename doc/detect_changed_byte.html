@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CANable v2 ODB2 Monitor</title>
+  <style>
+    body {
+      font-family: monospace;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>CANable v2 ODB2 Monitor</h1>
+  <button id="start-stop-button">Start Monitoring</button>
+  <button id="bit-changed-button">Bit Changed</button>
+  <button id="export-button">Export to CSV</button>
+  <table id=" messages-table">
+    <thead>
+      <tr>
+        <th>Message ID</th>
+        <th>Formatted Last Raw Value</th>
+        <th>Formatted Mask Value</th>
+        <th>First Timestamp</th>
+        <th>Last Timestamp</th>
+        <th>Counter</th>
+      </tr>
+    </thead>
+    <tbody id="messages-list">
+    </tbody>
+  </table>
+
+  <script>
+    const MASK_VALUE = (length) => new Array(length * 2).fill("X").join("");
+
+    let monitoring = false;
+    let messages = {};
+    let blacklist = new Set();
+
+    document.getElementById("start-stop-button").addEventListener("click", () => {
+      if (monitoring) {
+        monitoring = false;
+        document.getElementById("start-stop-button").innerHTML = "Start Monitoring";
+      } else {
+        monitoring = true;
+        document.getElementById("start-stop-button").innerHTML = "Stop Monitoring";
+        startMonitoring();
+      }
+    });
+
+    document.getElementById("bit-changed-button").addEventListener("click", () => {
+      Object.keys(messages).forEach((id) => {
+        messages[id].counter = 0;
+      });
+    });
+
+    document.getElementById("export-button").addEventListener("click", () => {
+      let csv = "Message ID,Formatted Last Raw Value,Formatted Mask Value,First Timestamp,Last Timestamp,Counter\n";
+      Object.keys(messages).forEach((id) => {
+        csv += `${id},${messages[id].formattedLastRawValue},${messages[id].formattedMaskValue},${messages[id].firstTimestamp},${messages[id].lastTimestamp},${messages[id].counter}\n`;
+      });
+      let blob = new Blob([csv], { type: "text/csv" });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement("a");
+      a.href = url;
+      a.download = "messages.csv";
+      a.click();
+    });
+
+    function startMonitoring() {
+      // Initialize CANable v2 connection
+      let canable = new usb.CANable({
+        vendorId: 0x1a72,
+        productId: 0x8292,
+      });
+
+      canable.on("message", (message) => {
+        const id = message.id.toString(16).padStart(8, "0");
+        if (!monitoring || blacklist.has(id)) return;
+        if (!messages[id]) {
+          messages[id] = {
+            formattedLastRawValue: "",
+            formattedMaskValue: "",
+            firstTimestamp: Date.now(),
+            lastTimestamp: Date.now(),
+            counter: 0,
+            lastRawValue: new Array(message.data.length).fill(0),
+          };
+        }
+        let rawValue = message.data.reduce((acc, byte) => acc + byte.toString(16).padStart(2, "0"), "");
+        let maskValue = getMaskValue(message, id);
+        if (maskValue === MASK_VALUE(message.data.length)) {
+          hide(id); // add message ID to blacklist and remove table row
+        } else {
+          updateMessage(id, maskValue, rawValue);
+        }
+      });
+    }
+
+    function getMaskValue(message, id) {
+      let maskValue = "";
+      for (let i = 0; i < message.data.length * 2; i += 2) {
+        if (messages[id].formattedMaskValue[i] !== "X" && messages[id].formattedMaskValue[i + 1] !== "X") {
+          if (message.data[i / 2] !== parseInt(messages[id].formattedMaskValue[i] + messages[id].formattedMaskValue[i + 1], 16)) {
+            maskValue += "XX";
+          } else {
+            maskValue += message.data[i / 2].toString(16).padStart(2, "0");
+          }
+        } else {
+          maskValue += "XX";
+        }
+      }
+      return maskValue;
+    }
+
+    function getMaskValue(message, id) {
+      let maskValue = "";
+      for (let i = 0; i < message.data.length * 2; i += 2) {
+        if ((messages[id].counter === 0) === (message.data[i / 2] === messages[id].lastRawValue[i / 2])) {
+          maskValue += messages[id].formattedMaskValue[i] + messages[id].formattedMaskValue[i + 1];
+        } else {
+          maskValue += "XX";
+        }
+      }
+      return maskValue;
+    }
+
+    function updateMessage(id, maskValue, rawValue) {
+      messages[id].formattedMaskValue = maskValue;
+      messages[id].lastTimestamp = Date.now();
+      messages[id].counter++;
+      messages[id].lastRawValue = rawValue; // update lastRawValue
+      update(id); // update table row
+    }
+
+    function hide(id) {
+      blacklist.add(id);
+      let row = document.getElementById(`row-${id}`);
+      if (row) {
+        document.getElementById("messages-list").removeChild(row);
+      }
+      delete messages[id]; // remove the message from the JavaScript array
+    }
+    
+    function update(id) {
+      let row = document.getElementById(`row-${id}`);
+      if (row) {
+        row.cells[1].innerHTML = messages[id].formattedLastRawValue;
+        row.cells[2].innerHTML = messages[id].formattedMaskValue;
+        row.cells[4].innerHTML = new Date(messages[id].lastTimestamp).toLocaleTimeString();
+        row.cells[5].innerHTML = messages[id].counter;
+      }
+    }
+  </script>
+</body>
+</html>

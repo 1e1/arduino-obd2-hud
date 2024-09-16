@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CANable v2 ODB2 Data Monitor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>CANable v2 ODB2 Data Monitor</h1>
+  <button id="start-stop-btn">Start Monitoring</button>
+  <button id="export-btn">Export to CSV</button>
+  <h2>Filters</h2>
+  <table id="filters-table">
+    <tr>
+      <th>Message ID</th>
+      <th>Label</th>
+      <th>Formula</th>
+      <th>Actions</th>
+    </tr>
+    <tbody id="filters-tbody">
+      <!-- filters will be listed here -->
+    </tbody>
+  </table>
+  <h2>Filtered Data</h2>
+  <table id="data-table">
+    <tr>
+      <th>Timestamp</th>
+      <th>Message ID</th>
+      <th>Label</th>
+      <th>Raw Bits</th>
+      <th>Computed Value</th>
+      <th>Formula</th>
+    </tr>
+    <tbody id="data-tbody">
+      <!-- filtered data will be listed here -->
+    </tbody>
+  </table>
+
+  <script>
+    // global variables
+    let monitoring = false;
+    let filters = [];
+    let data = [];
+
+    // connect to CANable v2 via Web Serial API
+    let serial;
+    async function connectToCANable() {
+      try {
+        serial = await navigator.serial.requestPort();
+        await serial.open({ baudRate: 500000 });
+        console.log("Connected to CANable v2");
+      } catch (error) {
+        console.error("Error connecting to CANable v2:", error);
+      }
+    }
+
+    // start/stop monitoring
+    document.getElementById("start-stop-btn").addEventListener("click", async () => {
+      if (!monitoring) {
+        await connectToCANable();
+        monitoring = true;
+        document.getElementById("start-stop-btn").innerHTML = "Stop Monitoring";
+      } else {
+        serial.close();
+        monitoring = false;
+        document.getElementById("start-stop-btn").innerHTML = "Start Monitoring";
+      }
+    });
+
+    // export to CSV
+    document.getElementById("export-btn").addEventListener("click", () => {
+      let csv = [];
+      data.forEach((row) => {
+        csv.push(`${row.timestamp},${row.messageId},${row.label},${row.rawBits},${row.computedValue},${row.formula}`);
+      });
+      let csvString = csv.join("\n");
+      let a = document.createElement("a");
+      a.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csvString)}`;
+      a.download = "canable_data.csv";
+      a.click();
+    });
+
+    // handle incoming serial data
+    serial.onReceive = async ({ data }) => {
+      // parse incoming CAN message
+      let message = await parseCANMessage(data);
+      if (message) {
+        // apply filters
+        filters.forEach((filter) => {
+          if (message.id === filter.messageId) {
+            let rawBits = message.data.toString(2).padStart(8, "0");
+            let computedValue = evaluateFormula(filter.formula, rawBits);
+            data.push({
+              timestamp: Date.now(),
+              messageId: message.id,
+              label: filter.label,
+              rawBits: rawBits,
+              computedValue: computedValue,
+              formula: filter.formula,
+            });
+          }
+        });
+        // update data table
+        updateDataTable();
+      }
+    };
+
+    // parse CAN message
+    async function parseCANMessage(data) {
+      // assuming 11-bit CAN message
+      let messageId = (data[0] << 3) | (data[1] >> 5);
+      let dataBytes = data.slice(2);
+      return { id: messageId, data: dataBytes };
+    }
+
+    // evaluate formula
+    function evaluateFormula(formula, rawBits) {
+      // replace tokens with bit values
+      let bits = rawBits.split("").map((bit) => parseInt(bit, 2));
+      formula = formula.replace(/\$([0-7])/g, (match, p1) => bits[p1]);
+      try {
+        return eval(formula);
+      } catch (error) {
+        console.error("Error evaluating formula:", error);
+        return NaN;
+      }
+    }
+
+    // update filters table
+    function updateFiltersTable() {
+      let html = "";
+      filters.forEach((filter) => {
+        html += `
+        <tr>
+          <td>${filter.messageId.toString(16)}</td>
+          <td>${filter.label}</td>
+          <td>${filter.formula}</td>
+          <td>
+            <button class="edit-btn" data-filter-id="${filters.indexOf(filter)}">Edit</button>
+            <button class="delete-btn" data-filter-id="${filters.indexOf(filter)}">Delete</button>
+          </td>
+        </tr>
+      `;
+      document.getElementById("filters-tbody").innerHTML = html;
+    }
+
+    // add filter
+    document.getElementById("filters-table").addEventListener("click", (e) => {
+      if (e.target.classList.contains("edit-btn")) {
+        let filterId = parseInt(e.target.getAttribute("data-filter-id"));
+        let filter = filters[filterId];
+        promptEditFilter(filter);
+      } else if (e.target.classList.contains("delete-btn")) {
+        let filterId = parseInt(e.target.getAttribute("data-filter-id"));
+        filters.splice(filterId, 1);
+        updateFiltersTable();
+      }
+    });
+
+    // prompt to add new filter
+    document.getElementById("filters-table").addEventListener("dblclick", () => {
+      promptAddFilter();
+    });
+
+    // prompt to edit or add filter
+    function promptEditFilter(filter) {
+      let messageId = filter ? filter.messageId : "";
+      let label = filter ? filter.label : "";
+      let formula = filter ? filter.formula : "";
+      let prompt = `
+        <p>Message ID (hex): <input type="text" id="message-id" value="${messageId}"></p>
+        <p>Label: <input type="text" id="label" value="${label}"></p>
+        <p>Formula: <input type="text" id="formula" value="${formula}"></p>
+      `;
+      let confirm = confirm(prompt);
+      if (confirm) {
+        let newFilter = {
+          messageId: parseInt(document.getElementById("message-id").value, 16),
+          label: document.getElementById("label").value,
+          formula: document.getElementById("formula").value,
+        };
+        if (filter) {
+          filters[filters.indexOf(filter)] = newFilter;
+        } else {
+          filters.push(newFilter);
+        }
+        updateFiltersTable();
+      }
+    }
+
+    // update data table
+    function updateDataTable() {
+      let html = "";
+      data.forEach((row) => {
+        html += `
+          <tr>
+            <td>${row.timestamp}</td>
+            <td>${row.messageId.toString(16)}</td>
+            <td>${row.label}</td>
+            <td>${row.rawBits}</td>
+            <td>${row.computedValue}</td>
+            <td>${row.formula}</td>
+          </tr>
+        `;
+      });
+      document.getElementById("data-tbody").innerHTML = html;
+    }
+  </script>
+</body>
+      <!-- 
+
+    Speed (km/h): Message ID 0x0100, Label Speed (km/h), Formula $1 ( byte 1 contains the speed value in km/h)
+    Odometer (km): Message ID 0x0901, Label Odometer (km), Formula $1 * 256 + $2 (bytes 1-2 contain the odometer value in km)
+    Handbrake position (on/off): Note: There is no standard OBD2 code for handbrake position. Handbrake position is typically not transmitted over the OBD2 bus.
+
+    Vehicle information (0x0900):
+    * Label: Vehicle Information
+    * Formula: Uint32($1, $2, $3, $4) (bytes 1-4 contain a 32-bit integer with vehicle information, such as the vehicle's make, model, and year)
+    Vehicle identification number (VIN) (0x0902):
+    * Label: VIN
+    * Formula: String($1, $2, ..., $17) (bytes 1-17 contain the 17-character VIN string)
+    Calibration verification number (CVN) (0x0903):
+    * Label: CVN
+    * Formula: Uint32($1, $2, $3, $4) (bytes 1-4 contain a 32-bit integer with the CVN value)
+
+      -->
+</html>

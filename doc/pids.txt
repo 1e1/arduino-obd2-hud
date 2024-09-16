@@ -1,0 +1,58 @@
+### unreliable note written by an IA ### 
+source: https://llama-3-70b-instruct.endpoints.kepler.ai.cloud.ovh.net/app/
+
+
+Here are the OBD2 Mode $01 and Mode $09 message IDs (PIDs) with the formulas to format the bits of the messages to the right value:
+
+Mode $01:
+
+    ** PID 0x0D: Vehicle Speed (km/h) **
+    + Request message: 01 0D 00 00 00 00 00 00
+    + Response message: 41 0D XX XX XX XX XX XX
+    + Formula: Speed (km/h) = (XX * 256 + YY) / 256 (where XX and YY are the two byte values)
+    ** PID 0x0C: Engine RPM (rev/min) **
+    + Request message: 01 0C 00 00 00 00 00 00
+    + Response message: 41 0C XX XX XX XX XX XX
+    + Formula: RPM = (XX * 256 + YY) / 4 (where XX and YY are the two byte values)
+    ** PID 0x15: Fuel consumption (l/100km) **
+    + Request message: 01 15 00 00 00 00 00 00
+    + Response message: 41 15 XX XX XX XX XX XX
+    + Formula: Fuel consumption (l/100km) = XX / 20 (where XX is the single byte value)
+    ** PID 0x42: Handbrake status (on/off) **
+    + Request message: 01 42 00 00 00 00 00 00
+    + Response message: 41 42 XX XX XX XX XX XX
+    + Formula: Handbrake status = XX & 0x01 (where XX is the single byte value, 0x01 for on, 0x00 for off)
+    ** PID 0x31: Distance traveled (km) **
+    + Request message: 01 31 00 00 00 00 00 00
+    + Response message: 41 31 XX XX XX XX XX XX
+    + Formula: Distance (km) = XX * 256 + YY (where XX and YY are the two byte values)
+
+Mode $09:
+
+    ** PID 0x09: Fuel level (percent) **
+    + Request message: 09 09 00 00 00 00 00 00
+    + Response message: 49 09 XX XX XX XX XX XX
+    + Formula: Fuel level (%) = XX (where XX is the single byte value, 0-100)
+    ** PID 0x0B: Gear position **
+    + Request message: 09 0B 00 00 00 00 00 00
+    + Response message: 49 0B XX XX XX XX XX XX
+    + Formula: Gear position = XX (where XX is the single byte value, 0x00 = Reverse, 0x01 = Neutral, 0x02 = 1st, ..., 0x07 = 6th)
+    ** PID 0x1F: Occupied seats **
+    + Request message: 09 1F 00 00 00 00 00 00
+    + Response message: 49 1F XX XX XX XX XX XX
+    + Formula: Occupied seats = XX (where XX is the single byte value, 0-8)
+    ** PID 0x20: Closed belts **
+    + Request message: 09 20 00 00 00 00 00 00
+    + Response message: 49 20 XX XX XX XX XX XX
+    + Formula: Closed belts = XX (where XX is the single byte value, 0-8)
+    ** PID 0x21: Day/night mode **
+    + Request message: 09 21 00 00 00 00 00 00
+    + Response message: 49 21 XX XX XX XX XX XX
+    + Formula: Day/night mode = XX & 0x01 (where XX is the single byte value, 0x01 for night, 0x00 for day)
+
+Note:
+
+    The formulas assume that the response messages are in the format MODE PID XX XX XX XX XX XX, where XX represents the requested data value.
+    The specific PID values, formulas, and formats may vary depending on the vehicle manufacturer and model.
+    Not all vehicles may support all of these PIDs, so you may need to use a diagnostic tool or consult the vehicle's documentation to determine which PIDs are supported.
+

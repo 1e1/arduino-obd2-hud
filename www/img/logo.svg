@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Proposal B — "The screen": the product itself. A 2:1 OLED (128x64) with the real
+       driving layout — top RPM bar, big centred speed, bottom fuel bar, gear in the corner. -->
+  <!-- bezel + glass (2:1 ratio honoured) -->
+  <rect x="56" y="128" width="400" height="256" rx="26" fill="none" stroke="#1F2328" stroke-width="12"/>
+  <rect x="80" y="152" width="352" height="208" rx="12" fill="#0EA5A0" opacity="0.08"/>
+
+  <!-- top RPM bar with ticks + cursor -->
+  <rect x="100" y="172" width="312" height="20" rx="4" fill="none" stroke="#1F2328" stroke-width="6"/>
+  <rect x="104" y="176" width="150" height="12" rx="2" fill="#0EA5A0">
+    <!-- revving sweep: quick rises, small drops, looping -->
+    <animate attributeName="width"
+             dur="5.2s" repeatCount="indefinite"
+             values="44;300;130;272;88;300;44"
+             keyTimes="0;0.22;0.38;0.58;0.74;0.9;1"
+             calcMode="spline"
+             keySplines="0.3 0 0.2 1; 0.4 0 0.6 1; 0.3 0 0.2 1; 0.4 0 0.6 1; 0.3 0 0.2 1; 0.4 0 0.6 1"/>
+  </rect>
+  <path d="M180 166 v32 M256 162 v40 M332 166 v32" stroke="#1F2328" stroke-width="5"/>
+
+  <!-- big centred speed — the hero value, in accent. Holds at 108 and flickers to 107
+       for 1s every 10s (10s loop, discrete). -->
+  <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="104" font-weight="700"
+     fill="#0EA5A0" text-anchor="middle">
+    <text x="232" y="306" opacity="1">108<animate attributeName="opacity" dur="10s"
+      repeatCount="indefinite" calcMode="discrete" keyTimes="0;0.9" values="1;0"/></text>
+    <text x="232" y="306" opacity="0">107<animate attributeName="opacity" dur="10s"
+      repeatCount="indefinite" calcMode="discrete" keyTimes="0;0.9" values="0;1"/></text>
+  </g>
+  <!-- gear glyph, corner — fixed on 6 (cruising at 108) -->
+  <text x="392" y="240" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace"
+        font-size="40" font-weight="700" fill="#0EA5A0">6</text>
+
+  <!-- bottom fuel bar — empties from full to flat over 6 real hours, then stays empty -->
+  <rect x="100" y="324" width="312" height="20" rx="4" fill="none" stroke="#1F2328" stroke-width="6"/>
+  <rect x="104" y="328" width="300" height="12" rx="2" fill="#0EA5A0">
+    <animate attributeName="width" begin="0s" dur="21600s" repeatCount="1"
+             values="300;0" calcMode="linear" fill="freeze"/>
+  </rect>
+</svg>

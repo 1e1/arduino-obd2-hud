@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 770" font-family="ui-sans-serif,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <!-- Named zones of the DRIVING screen. Reference for the zoning vocabulary.
+       Category letters: R = RPM bar, F = Fuel bar, C = Consumption, S = Speed, G = Gear, T = Trip.
+       Gear (G) lists every on-screen gear position (each gear renders at its own spot). -->
+  <defs>
+    <style>
+      .lbl{fill:#dfe7ef;font-size:14px}
+      .grp{fill:#dfe7ef;font-size:15px;font-weight:700}
+      .title{fill:#dfe7ef;font-size:20px;font-weight:700}
+      .cap{fill:#8c98a6;font-size:12px}
+      .oled{fill:#8fe9ff}
+      .badgetxt{fill:#06090d;font-size:12px;font-weight:700}
+      .gid{fill:#feca57;font-size:11px;font-weight:700}
+      .lead{stroke:#5a6675;stroke-width:1.2;fill:none}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="770" fill="#0c0f13"/>
+  <text x="40" y="48" class="title">Driving mode — zones (zoning)</text>
+  <text x="40" y="72" class="cap">OLED 128×64. Markers colored by category: R RPM bar · F Fuel bar · C Consumption · S Speed · G Gear · T Trip.</text>
+
+  <!-- ============================ SCREEN MOCK (scale 6, origin 70,150) ============================ -->
+  <rect x="56" y="136" width="796" height="412" rx="10" fill="#06090d" stroke="#2a323d"/>
+  <rect x="70" y="150" width="768" height="384" fill="#04070a"/>
+
+  <!-- RPM bar (top) -->
+  <rect x="76" y="168" width="414" height="24" class="oled" opacity="0.85"/>
+  <rect x="262" y="156" width="3" height="48" class="oled"/>
+  <rect x="655" y="156" width="3" height="48" class="oled"/>
+  <rect x="486" y="150" width="6" height="78" class="oled"/>
+
+  <!-- current speed (big, center) -->
+  <text x="454" y="370" class="oled" font-size="150" font-weight="700" text-anchor="middle" font-family="ui-monospace,monospace">108</text>
+  <!-- max speed (top-right corner) -->
+  <text x="736" y="270" class="oled" font-size="30" text-anchor="middle" font-family="ui-monospace,monospace">126</text>
+
+  <!-- trip line (T) -->
+  <text x="78" y="474" class="oled" font-size="22" font-family="ui-monospace,monospace">198.3</text>
+  <text x="828" y="474" class="oled" font-size="22" text-anchor="end" font-family="ui-monospace,monospace">0:08</text>
+
+  <!-- fuel bar (bottom) -->
+  <rect x="76" y="480" width="756" height="48" fill="none" stroke="#8fe9ff" stroke-width="3"/>
+  <rect x="80" y="484" width="514" height="40" class="oled" opacity="0.85"/>
+  <rect x="594" y="480" width="6" height="48" class="oled"/>
+  <rect x="460" y="490" width="3" height="28" fill="#04070a"/>
+  <rect x="532" y="490" width="3" height="28" fill="#04070a"/>
+  <rect x="500" y="486" width="4" height="36" fill="#04070a"/>
+
+  <!-- gear glyphs at their firmware positions (yellow), with G-ids -->
+  <g font-family="ui-monospace,monospace">
+    <text x="808" y="342" fill="#feca57" font-size="22" font-weight="700">1</text><text x="822" y="332" class="gid">G1</text>
+    <text x="700" y="342" fill="#feca57" font-size="22" font-weight="700">2</text><text x="714" y="332" class="gid">G2</text>
+    <text x="178" y="282" fill="#feca57" font-size="22" font-weight="700">3</text><text x="192" y="272" class="gid">G3</text>
+    <text x="70"  y="282" fill="#feca57" font-size="22" font-weight="700">4</text><text x="84"  y="272" class="gid">G4</text>
+    <text x="70"  y="342" fill="#feca57" font-size="22" font-weight="700">5</text><text x="84"  y="332" class="gid">G5</text>
+    <text x="178" y="342" fill="#feca57" font-size="22" font-weight="700">N</text><text x="192" y="332" class="gid">GN</text>
+    <text x="178" y="366" fill="#feca57" font-size="22" font-weight="700">R</text><text x="192" y="372" class="gid">GR</text>
+  </g>
+
+  <!-- ============================ MARKERS ============================ -->
+  <!-- R = RPM (orange) -->
+  <g>
+    <circle cx="263" cy="118" r="14" fill="#ff9f43"/><text x="263" y="123" text-anchor="middle" class="badgetxt">R1</text>
+    <line x1="263" y1="132" x2="263" y2="156" class="lead"/>
+    <circle cx="489" cy="98" r="14" fill="#ff9f43"/><text x="489" y="103" text-anchor="middle" class="badgetxt">R2</text>
+    <line x1="489" y1="112" x2="489" y2="150" class="lead"/>
+    <circle cx="657" cy="118" r="14" fill="#ff9f43"/><text x="657" y="123" text-anchor="middle" class="badgetxt">R3</text>
+    <line x1="657" y1="132" x2="657" y2="156" class="lead"/>
+  </g>
+  <!-- S = Speed (pink) -->
+  <circle cx="454" cy="408" r="14" fill="#ff6b9d"/><text x="454" y="413" text-anchor="middle" class="badgetxt">S1</text>
+  <line x1="454" y1="394" x2="454" y2="380" class="lead"/>
+  <circle cx="788" cy="240" r="14" fill="#ff6b9d"/><text x="788" y="245" text-anchor="middle" class="badgetxt">S2</text>
+  <line x1="775" y1="245" x2="748" y2="262" class="lead"/>
+  <!-- F = Fuel cursor (green) -->
+  <circle cx="597" cy="562" r="14" fill="#2ed573"/><text x="597" y="567" text-anchor="middle" class="badgetxt">F1</text>
+  <line x1="597" y1="548" x2="597" y2="528" class="lead"/>
+  <!-- C = Consumption (blue) -->
+  <circle cx="533" cy="585" r="14" fill="#54a0ff"/><text x="533" y="590" text-anchor="middle" class="badgetxt">C1</text>
+  <line x1="533" y1="571" x2="533" y2="518" class="lead"/>
+  <circle cx="461" cy="585" r="14" fill="#54a0ff"/><text x="461" y="590" text-anchor="middle" class="badgetxt">C3</text>
+  <line x1="461" y1="571" x2="461" y2="518" class="lead"/>
+  <circle cx="505" cy="615" r="14" fill="#54a0ff"/><text x="505" y="620" text-anchor="middle" class="badgetxt">C2</text>
+  <line x1="505" y1="601" x2="500" y2="518" class="lead"/>
+  <!-- T = Trip (purple) -->
+  <circle cx="130" cy="432" r="14" fill="#a55eea"/><text x="130" y="437" text-anchor="middle" class="badgetxt">T1</text>
+  <line x1="116" y1="436" x2="92" y2="460" class="lead"/>
+  <circle cx="772" cy="432" r="14" fill="#a55eea"/><text x="772" y="437" text-anchor="middle" class="badgetxt">T2</text>
+  <line x1="786" y1="436" x2="806" y2="460" class="lead"/>
+
+  <!-- ============================ TREE (right) ============================ -->
+  <g transform="translate(884,140)">
+    <text x="0" y="0" class="title" font-size="17">Zoning</text>
+
+    <rect x="0" y="20" width="10" height="10" fill="#ff9f43"/><text x="20" y="30" class="grp">R — RPM bar</text>
+    <circle cx="14" cy="52" r="11" fill="#ff9f43"/><text x="14" y="56" text-anchor="middle" class="badgetxt">R1</text><text x="34" y="56" class="lbl">min edge</text>
+    <circle cx="14" cy="74" r="11" fill="#ff9f43"/><text x="14" y="78" text-anchor="middle" class="badgetxt">R2</text><text x="34" y="78" class="lbl">current cursor</text>
+    <circle cx="14" cy="96" r="11" fill="#ff9f43"/><text x="14" y="100" text-anchor="middle" class="badgetxt">R3</text><text x="34" y="100" class="lbl">max edge</text>
+
+    <rect x="0" y="118" width="10" height="10" fill="#2ed573"/><text x="20" y="128" class="grp">F — Fuel bar</text>
+    <circle cx="14" cy="150" r="11" fill="#2ed573"/><text x="14" y="154" text-anchor="middle" class="badgetxt">F1</text><text x="34" y="154" class="lbl">fuel cursor</text>
+
+    <rect x="0" y="172" width="10" height="10" fill="#54a0ff"/><text x="20" y="182" class="grp">C — Consumption</text>
+    <circle cx="14" cy="204" r="11" fill="#54a0ff"/><text x="14" y="208" text-anchor="middle" class="badgetxt">C1</text><text x="34" y="208" class="lbl">min edge</text>
+    <circle cx="14" cy="226" r="11" fill="#54a0ff"/><text x="14" y="230" text-anchor="middle" class="badgetxt">C2</text><text x="34" y="230" class="lbl">current cursor</text>
+    <circle cx="14" cy="248" r="11" fill="#54a0ff"/><text x="14" y="252" text-anchor="middle" class="badgetxt">C3</text><text x="34" y="252" class="lbl">max edge</text>
+
+    <rect x="0" y="270" width="10" height="10" fill="#ff6b9d"/><text x="20" y="280" class="grp">S — Speed</text>
+    <circle cx="14" cy="302" r="11" fill="#ff6b9d"/><text x="14" y="306" text-anchor="middle" class="badgetxt">S1</text><text x="34" y="306" class="lbl">current</text>
+    <circle cx="14" cy="324" r="11" fill="#ff6b9d"/><text x="14" y="328" text-anchor="middle" class="badgetxt">S2</text><text x="34" y="328" class="lbl">max</text>
+
+    <rect x="0" y="346" width="10" height="10" fill="#feca57"/><text x="20" y="356" class="grp">G — Gear (per-gear position)</text>
+    <circle cx="14" cy="378" r="11" fill="#feca57"/><text x="14" y="382" text-anchor="middle" class="badgetxt">G1</text><text x="34" y="382" class="lbl">gear 1 @ (123,32)</text>
+    <circle cx="14" cy="400" r="11" fill="#feca57"/><text x="14" y="404" text-anchor="middle" class="badgetxt">G2</text><text x="34" y="404" class="lbl">gear 2 @ (105,32)</text>
+    <circle cx="14" cy="422" r="11" fill="#feca57"/><text x="14" y="426" text-anchor="middle" class="badgetxt">G3</text><text x="34" y="426" class="lbl">gear 3 @ (18,22)</text>
+    <circle cx="14" cy="444" r="11" fill="#feca57"/><text x="14" y="448" text-anchor="middle" class="badgetxt">G4</text><text x="34" y="448" class="lbl">gear 4 @ (0,22)</text>
+    <circle cx="14" cy="466" r="11" fill="#feca57"/><text x="14" y="470" text-anchor="middle" class="badgetxt">G5</text><text x="34" y="470" class="lbl">gear 5 @ (0,32)</text>
+    <circle cx="14" cy="488" r="11" fill="#feca57"/><text x="14" y="492" text-anchor="middle" class="badgetxt">GN</text><text x="34" y="492" class="lbl">neutral @ (18,32)</text>
+    <circle cx="14" cy="510" r="11" fill="#feca57"/><text x="14" y="514" text-anchor="middle" class="badgetxt">GR</text><text x="34" y="514" class="lbl">reverse @ (18,32) — same cell as GN</text>
+
+    <rect x="0" y="532" width="10" height="10" fill="#a55eea"/><text x="20" y="542" class="grp">T — Trip</text>
+    <circle cx="14" cy="564" r="11" fill="#a55eea"/><text x="14" y="568" text-anchor="middle" class="badgetxt">T1</text><text x="34" y="568" class="lbl">distance travelled</text>
+    <circle cx="14" cy="586" r="11" fill="#a55eea"/><text x="14" y="590" text-anchor="middle" class="badgetxt">T2</text><text x="34" y="590" class="lbl">elapsed time (h:mm)</text>
+  </g>
+</svg>

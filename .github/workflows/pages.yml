@@ -1,0 +1,40 @@
+name: pages
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble site
+        run: |
+          mkdir -p site/img
+          cp www/index.html site/index.html
+          cp www/hud-simulator.html site/hud-simulator.html
+          cp www/boot-demo.html site/boot-demo.html
+          cp www/img/logo.svg site/img/logo.svg
+          cp doc/lcd.jpg doc/lcd-driving.jpg doc/lcd-idle.jpg site/img/
+          cp doc/zones-driving.svg doc/zones-idle.svg doc/wiring.png site/img/
+          cp hardware/2d-models/canbed-rp2040.svg hardware/2d-models/oled-ssd1309.svg site/img/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

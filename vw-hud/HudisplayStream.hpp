@@ -23,39 +23,45 @@ class HudisplayStream : public Hudisplay {
     if (0 == this->_frameIndex) {
       switch (this->_page) {
         case Hudisplay::PAGE_DRIVING:
+          // native PQ-CAN units (post-OBD pivot): litres / km / l-per-100 / µl
           this->_stream->print(F("tankCapacity       (l)="));
           this->_stream->println(this->_getTankCapacity());
-          this->_stream->print(F("tankLoad        (%256)="));
+          this->_stream->print(F("tankLoad           (l)="));
           this->_stream->println(this->_getTankLoad());
           this->_stream->print(F("tankValue          (l)="));
           this->_stream->println(this->_getTankValue());
-          this->_stream->print(F("consumptionLoad (%256)="));
+          this->_stream->print(F("consumptionLoad    (l)="));
           this->_stream->println(this->_getConsumptionLoad());
           this->_stream->print(F("consumptionValue   (l)="));
           this->_stream->println(this->_getConsumptionInL());
-          this->_stream->print(F("odometer          (hm)="));
+          this->_stream->print(F("odometer          (km)="));
           this->_stream->println(this->_getOdometerValue());
           this->_stream->print(F("rpm              (/64)="));
           this->_stream->println(this->_getRpmValueInDiv64());
           this->_stream->print(F("speed           (km/h)="));
           this->_stream->println(this->_getSpeedValue());
-          this->_stream->print(F("fuelConsumption    (?)="));
+          this->_stream->print(F("fuelConsumption (ringB)="));
           this->_stream->println(this->_getFuelConsumptionValue());
           this->_stream->print(F("gearPosition       (?)="));
           this->_stream->println(this->_getGearPosition());
           break;
 
         case Hudisplay::PAGE_IDLE:
-          this->_stream->print(F("avg consumption (dl/100km)="));
+          this->_stream->print(F("avg consumption (l/100km)="));
           this->_stream->println(this->_getAverageConsumptionInLp10km());
-          this->_stream->print(F("avg speed           (km/h)="));
+          this->_stream->print(F("avg speed          (km/h)="));
           this->_stream->println(this->_getAverageSpeedInKmh());
+          break;
+
+        case Hudisplay::PAGE_BOOT:
+        case Hudisplay::PAGE_NONE:
+          // no scalar dump for the boot starfield / idle-none page
           break;
       }
 
-      this->_stream->print(F("distance (hm)="));
+      this->_stream->print(F("distance (km)="));
       this->_stream->println(this->_getDistance());
-      this->_stream->print(F("duration (s)="));
+      this->_stream->print(F("duration (4s)="));
       this->_stream->println(this->_getDuration());
 
       this->_stream->println(F("-------"));

@@ -5,10 +5,38 @@
 #include "CarEvent.h"
 
 
+/**
+ * Bench / simulator backend: sensor values are injected over a Stream (Serial)
+ * as plain-text "<sensorId> <value>\n" pairs, one sensor per line. The PC-side
+ * simulator (www/) writes these frames so the *real* Hudisplay renders exactly
+ * what it would from the car.
+ *
+ * Wire protocol: <sensorId> is the CarEvent::Sensor enum ordinal (see CarEvent.h),
+ * <value> is the native unit expected by the matching getter. Ordinals (current
+ * cleaned enum — OBD-era MAF/ENGINE_FUEL_RATE/TORQUE removed):
+ *
+ *   2 = TANK_CAPACITY  (litres)      7  = FUEL_CONSUMPTION (cumulative µl)
+ *   3 = TANK_LOAD      (litres 0-126) 8 = HANDBRAKE_POSITION (0/1)
+ *   4 = ODOMETER       (km)          9  = GEAR_POSITION      (cluster code)
+ *   5 = RPM            (raw rpm*4)   10 = IGNITION           (0/1, Klemme_15)
+ *   6 = VEHICLE_SPEED  (km/h)
+ *
+ *   (0 = NONE, 1 = TIMEOUT are reserved control ordinals, not data.)
+ *
+ * IGNITION drives the whole Workflow state machine: without a "10 1" frame the
+ * screen never turns on.
+ *
+ * Same one-sensor-per-update() contract and _value accumulator as CarEventCan.
+ */
 class CarEventStream : public CarEvent {
 
   public:
-  void setStream(Stream &stream) { this->_stream = &stream; this->_stream->println(F("CarEventStream: OK")); this->_stream->flush(); };
+  void setStream(Stream &stream) {
+    this->_stream = &stream;
+    this->_stream->setTimeout(20);          // don't block loop() waiting for a full line
+    this->_stream->println(F("CarEventStream: OK"));
+    this->_stream->flush();
+  };
 
   protected:
   void _updateMode(void) {};
@@ -16,73 +44,25 @@ class CarEventStream : public CarEvent {
   void _switchOff(void) { this->_stream->println(F("* switchOff")); this->_stream->flush(); };
 
   void _update(void) {
-    if (this->_stream->available() > 0) {
-      const uint8_t sensorId = this->_stream->parseInt();
-      this->_sensorValue = this->_stream->parseInt();
-      /*
-      this->_stream->flush();
-      this->_stream->print("sensorId=");
-      this->_stream->println(sensorId);
-      this->_stream->print("_sensorValue=");
-      this->_stream->println(this->_sensorValue);
-      this->_stream->flush();
-      */
-      switch (sensorId) {
-        case 1: 
-          this->_sensor = SENSOR_TANK_CAPACITY; 
-          break;
-        case 2: 
-          this->_sensor = SENSOR_TANK_LOAD; 
-          break;
-        case 3: 
-          this->_sensor = SENSOR_ODOMETER; 
-          break;
-        case 4: 
-          this->_sensor = SENSOR_RPM; 
-          break;
-        case 5: 
-          this->_sensor = SENSOR_MAF; 
-          break;
-        case 6: 
-          this->_sensor = SENSOR_TORQUE_LOAD; 
-          break;
-        case 7: 
-          this->_sensor = SENSOR_VEHICLE_SPEED; 
-          break;
-        case 8: 
-          this->_sensor = SENSOR_FUEL_CONSUMPTION; 
-          break;
-        case 9: 
-          this->_sensor = SENSOR_HANDBRAKE_POSITION;
-          break;
-        case 10: 
-          this->_sensor = SENSOR_GEAR_POSITION; 
-          break;
-      }
+    if (this->_stream->available() <= 0) {
+      return;                               // no data -> _sensor stays SENSOR_NONE
+    }
+
+    const long sensorId = this->_stream->parseInt();
+    this->_value        = (unsigned long) this->_stream->parseInt();
+
+    // wire id == Sensor enum ordinal; ignore anything outside the live range
+    if (sensorId > SENSOR_NONE && sensorId < SENSOR_COUNT) {
+      this->_sensor = (Sensor) sensorId;
     }
   };
 
-
-  const uint8_t _readByte(void) const
-  {
-      return this->_sensorValue;
-  };
-
-
-  const unsigned short _readShort(void) const
-  {
-      return this->_sensorValue;
-  };
-
-
-  const unsigned long _readLong(void) const
-  {
-      return this->_sensorValue;
-  };
-
+  uint8_t        _readByte(void)  const { return (uint8_t)(this->_value & 0xFF); };
+  unsigned short _readShort(void) const { return (unsigned short)(this->_value & 0xFFFF); };
+  unsigned long  _readLong(void)  const { return this->_value; };
 
   Stream* _stream = nullptr;
-  unsigned long _sensorValue;
+  unsigned long _value = 0;
 
 };
 

@@ -1,0 +1,160 @@
+name: Releases
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+    tags:
+      - "v*"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+
+  firmware:
+    name: compile (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Same board matrix as build.yml — keep the two in sync.
+          - { fqbn: "arduino:avr:uno",          name: "uno",         core: "arduino:avr" }
+          - { fqbn: "arduino:avr:nano",         name: "nano",        core: "arduino:avr" }
+          - { fqbn: "arduino:megaavr:nona4809", name: "nano-every",  core: "arduino:megaavr" }
+          - { fqbn: "Seeeduino:samd:seeed_XIAO_m0", name: "samd21",  core: "Seeeduino:samd", url: "https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json" }
+          - { fqbn: "rp2040:rp2040:rpipico",    name: "rp2040",      core: "rp2040:rp2040", url: "https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json" }
+          - { fqbn: "esp32:esp32:XIAO_ESP32C3", name: "esp32c3",     core: "esp32:esp32", url: "https://espressif.github.io/arduino-esp32/package_esp32_index.json" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install core & libraries
+        run: |
+          if [ -n "${{ matrix.url }}" ]; then
+            arduino-cli config init --overwrite
+            arduino-cli config add board_manager.additional_urls ${{ matrix.url }}
+          fi
+          arduino-cli core update-index
+          arduino-cli core install ${{ matrix.core }}
+          arduino-cli lib install U8g2 mcp_can
+      - name: Compile
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} --output-dir build/${{ matrix.name }} vw-hud
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.name }}
+          path: |
+            build/${{ matrix.name }}/*.hex
+            build/${{ matrix.name }}/*.bin
+            build/${{ matrix.name }}/*.uf2
+            build/${{ matrix.name }}/*.elf
+          if-no-files-found: warn
+
+
+  bundle:
+    name: Build artifact
+    runs-on: ubuntu-latest
+    needs: [firmware]
+
+    steps:
+      - name: Download all firmware
+        uses: actions/download-artifact@v4
+        with:
+          pattern: firmware-*
+          path: firmware
+
+      - name: Pack firmware bundle
+        run: |
+          mkdir -p dist
+          tar -czf dist/firmware.tar.gz -C firmware .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-bundle
+          path: dist/firmware.tar.gz
+
+
+  dev:
+    name: DEV release
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    needs: [bundle]
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: firmware-bundle
+          path: release
+
+      - name: Delete old DEV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete DEV -y --repo ${{ github.repository }} || true
+          git push origin :refs/tags/DEV || true
+
+      - name: Publish DEV
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: DEV
+          prerelease: true
+          name: Development Build
+          files: release/firmware.tar.gz
+
+
+  rc:
+    name: Release Candidate
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    needs: [bundle]
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: firmware-bundle
+          path: release
+
+      - name: Delete old RC
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete RC -y --repo ${{ github.repository }} || true
+          git push origin :refs/tags/RC || true
+
+      - name: Publish RC
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: RC
+          prerelease: true
+          name: Release Candidate
+          files: release/firmware.tar.gz
+
+
+  stable:
+    name: Stable release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: [bundle]
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: firmware-bundle
+          path: release
+
+      - name: Delete RC
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete RC -y --repo ${{ github.repository }} || true
+          git push origin :refs/tags/RC || true
+
+      - name: Publish stable
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          files: release/firmware.tar.gz

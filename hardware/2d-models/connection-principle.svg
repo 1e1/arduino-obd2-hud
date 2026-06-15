@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 297 210" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerUnits="userSpaceOnUse" markerWidth="5" markerHeight="5" refX="4.2" refY="2.5" orient="auto">
+      <path d="M0,0 L5,2.5 L0,5 z" fill="#333"/>
+    </marker>
+    <style>
+      .box   { fill:#fafafa; stroke:#111; stroke-width:0.5; }
+      .sub   { fill:#fff; stroke:#555; stroke-width:0.35; }
+      .obd   { fill:#e8e8ef; stroke:#222; stroke-width:0.5; }
+      .pin   { fill:#fff; stroke:#222; stroke-width:0.3; }
+      .canh  { stroke:#e07b00; stroke-width:0.9; fill:none; }
+      .canl  { stroke:#1c9b3a; stroke-width:0.9; fill:none; }
+      .gnd   { stroke:#111;    stroke-width:0.9; fill:none; }
+      .v12   { stroke:#d11;    stroke-width:0.9; fill:none; }
+      .note  { fill:#fff8e1; stroke:#c79100; stroke-width:0.3; }
+      .t     { font-size:2.7px; fill:#111; }
+      .ts    { font-size:2.2px; fill:#333; }
+      .tw    { font-size:2.4px; font-weight:bold; }
+      .lbl   { font-size:3.2px; fill:#111; font-weight:bold; }
+      .title { font-size:5px; fill:#111; font-weight:bold; }
+      .warn  { font-size:2.4px; fill:#a33; }
+    </style>
+  </defs>
+
+  <rect x="4" y="4" width="289" height="202" fill="none" stroke="#111" stroke-width="0.4"/>
+  <text x="10" y="14" class="title">CONSIGNE — Raccordement CAN bus (sans DB9) / CAN wiring principle</text>
+  <text x="10" y="20" class="ts">VW Sharan PQ · prise OBD-II → câble fin 4 fils → bornier CANBed · schéma de principe (non à l'échelle)</text>
+
+  <!-- ===== CAR OBD-II PORT ===== -->
+  <text x="48" y="34" class="lbl" text-anchor="middle">VOITURE — prise OBD-II (J1962)</text>
+  <path d="M22,42 L74,42 L70,72 L26,72 Z" class="obd"/>
+  <text x="48" y="78" class="ts" text-anchor="middle">sous le tableau de bord (côté conducteur)</text>
+  <!-- pins -->
+  <circle cx="34" cy="50" r="2.2" class="pin"/><text x="34" y="50.9" class="ts" text-anchor="middle">6</text>
+  <circle cx="48" cy="50" r="2.2" class="pin"/><text x="48" y="50.9" class="ts" text-anchor="middle">14</text>
+  <circle cx="40" cy="62" r="2.2" class="pin"/><text x="40" y="62.9" class="ts" text-anchor="middle">4</text>
+  <circle cx="48" cy="62" r="2.2" class="pin"/><text x="48" y="62.9" class="ts" text-anchor="middle">5</text>
+  <circle cx="62" cy="62" r="2.2" class="pin"/><text x="62" y="62.9" class="ts" text-anchor="middle">16</text>
+  <text x="34" y="45" class="ts" text-anchor="middle">CAN-H</text>
+  <text x="56" y="45" class="ts" text-anchor="middle">CAN-L</text>
+  <text x="40" y="69.5" class="ts" text-anchor="middle">GND</text>
+  <text x="62" y="69.5" class="ts" text-anchor="middle">+12V</text>
+  <text x="48" y="86" class="warn" text-anchor="middle">prise OBD mâle ICI (encombrant = OK, caché)</text>
+  <text x="48" y="90" class="ts" text-anchor="middle">→ idéal : passthrough pour garder le port utilisable</text>
+
+  <!-- ===== CABLE (thin, 4 conductors) ===== -->
+  <text x="148" y="34" class="lbl" text-anchor="middle">CÂBLE FIN 4 CONDUCTEURS — pas de DB9</text>
+  <path class="canh" marker-end="url(#ar)" d="M64,50 H236"/>
+  <path class="canl" marker-end="url(#ar)" d="M50,52 C 110,52 150,57 236,57"/>
+  <path class="gnd"  marker-end="url(#ar)" d="M40,64 C 110,64 150,64 236,64"/>
+  <path class="v12"  marker-end="url(#ar)" d="M62,64 C 120,72 160,71 236,71"/>
+  <text x="120" y="48" class="t" fill="#e07b00">CAN-H  (pin 6)</text>
+  <text x="120" y="55" class="t" fill="#1c9b3a">CAN-L  (pin 14)</text>
+  <text x="120" y="62" class="t">GND  (pin 4/5)</text>
+  <text x="120" y="76" class="t" fill="#d11">+12V permanent (pin 16)</text>
+
+  <!-- ===== HUD ENCLOSURE ===== -->
+  <text x="262" y="34" class="lbl" text-anchor="middle">HUD</text>
+  <rect x="236" y="40" width="52" height="118" rx="2" class="box"/>
+  <text x="262" y="46" class="ts" text-anchor="middle">boîtier imprimé</text>
+
+  <!-- CANBed -->
+  <rect x="241" y="50" width="42" height="44" rx="1.5" class="sub"/>
+  <text x="262" y="55" class="tw" text-anchor="middle">CANBed RP2040</text>
+  <text x="262" y="59" class="ts" text-anchor="middle">MCP2515 + MCP2551 onboard</text>
+  <!-- 4-pin terminal -->
+  <rect x="238" y="62" width="6" height="22" class="pin"/>
+  <text x="247" y="66" class="ts" text-anchor="start">CANH</text>
+  <text x="247" y="71" class="ts" text-anchor="start">CANL</text>
+  <text x="247" y="76" class="ts" text-anchor="start">GND</text>
+  <text x="247" y="81" class="ts" text-anchor="start">VIN</text>
+  <text x="262" y="90" class="ts" text-anchor="middle">bornier 4 pts (ou soudure directe)</text>
+
+  <!-- OLED -->
+  <rect x="241" y="100" width="42" height="40" rx="1.5" class="sub"/>
+  <text x="262" y="106" class="tw" text-anchor="middle">OLED SSD1309</text>
+  <text x="262" y="111" class="ts" text-anchor="middle">SPI ← header CANBed</text>
+  <text x="262" y="116" class="ts" text-anchor="middle">SCK · SI(MOSI) · IO8(CS)</text>
+  <text x="262" y="121" class="ts" text-anchor="middle">+ DC/RES (GPIO libres)</text>
+  <text x="262" y="126" class="warn" text-anchor="middle">NE PAS réutiliser GP9</text>
+  <text x="262" y="130" class="ts" text-anchor="middle">(= CS du MCP2515)</text>
+
+  <text x="262" y="150" class="ts" text-anchor="middle">DB9 NON monté → câble fin côté HUD</text>
+  <text x="262" y="154" class="ts" text-anchor="middle">strain-relief en sortie de boîtier</text>
+
+  <!-- ===== NOTES ===== -->
+  <g transform="translate(14,120)">
+    <rect x="0" y="0" width="200" height="64" class="note"/>
+    <text x="4" y="8" class="lbl">RÈGLES / RULES</text>
+    <text x="4" y="16" class="t">① Terminaison 120 Ω : <tspan font-weight="bold">OFF</tspan> — bus déjà terminé par ses 2 nœuds ;</text>
+    <text x="8" y="20.5" class="ts">un 3e 120 Ω chargerait le bus (switch CANBed désactivé).</text>
+    <text x="4" y="28" class="t">② Alim : +12V pin 16 = <tspan font-weight="bold">permanent</tspan> → VIN. Le firmware</text>
+    <text x="8" y="32.5" class="ts">dort (sleep + réveil sur activité CAN). Mesurer le courant de veille.</text>
+    <text x="8" y="37" class="ts">Variante batterie-safe : +12V <tspan font-weight="bold">commuté</tspan> (add-a-fuse au contact).</text>
+    <text x="4" y="44.5" class="t">③ <tspan fill="#a33" font-weight="bold">À VÉRIFIER (discodb2)</tspan> : 0x280 (RPM) ET 0x320</text>
+    <text x="8" y="49" class="ts">(vitesse+carburant) bien diffusés sur le bus OBD 6/14 ?</text>
+    <text x="8" y="53.5" class="ts">Sinon (gateway ne pontise pas le Kombi) → tap derrière le combiné.</text>
+    <text x="4" y="61" class="ts">Bitrate 500 kbps · crystal MCP 16 MHz (MCP_16MHZ).</text>
+  </g>
+
+  <!-- title block -->
+  <g transform="translate(222,168)">
+    <rect x="0" y="0" width="67" height="34" fill="none" stroke="#111" stroke-width="0.4"/>
+    <text x="3" y="7" class="lbl">VW HUD — Connection consigne</text>
+    <text x="3" y="14" class="ts">Path: OBD-II → 4-wire cable → CANBed terminal</text>
+    <text x="3" y="19" class="ts">No DB9 · 120 Ω OFF · +12V pin16</text>
+    <text x="3" y="24" class="ts">File: hardware/2d-models/connection-principle.svg</text>
+    <text x="3" y="29" class="ts">Schematic — not to scale</text>
+  </g>
+</svg>

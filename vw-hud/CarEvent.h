@@ -19,48 +19,44 @@ class CarEvent {
     public:
     static const uint8_t TIMEOUT_COUNTER_MAX = HUDISPLAY_TIMEOUT_COUNTER;
 
-    typedef enum { 
-        MODE_NONE, 
-        MODE_IDLE, 
+    typedef enum {
+        MODE_NONE,
+        MODE_IDLE,
         MODE_DRIVING,
-        MODE_DRIVING_SPORT, 
+        MODE_DRIVING_SPORT,
     } Mode;
 
-    typedef enum { 
+    typedef enum {
         SENSOR_NONE,
         SENSOR_TIMEOUT,
-        SENSOR_TANK_CAPACITY, 
-        SENSOR_TANK_LOAD, 
+        SENSOR_TANK_CAPACITY,
+        SENSOR_TANK_LOAD,
         SENSOR_ODOMETER,
-        SENSOR_RPM, 
-        SENSOR_MAF, 
-        SENSOR_ENGINE_FUEL_RATE,
-        SENSOR_TORQUE_LOAD, 
+        SENSOR_RPM,
         SENSOR_VEHICLE_SPEED,
-        SENSOR_FUEL_CONSUMPTION, 
-        SENSOR_HANDBRAKE_POSITION, 
+        SENSOR_FUEL_CONSUMPTION,
+        SENSOR_HANDBRAKE_POSITION,
         SENSOR_GEAR_POSITION,
+        SENSOR_IGNITION,
     } Sensor;
-    const uint8_t SENSOR_COUNT = 13;
+    const uint8_t SENSOR_COUNT = 11;
 
 
-    const Sensor getSensor(void) const;
+    Sensor getSensor(void) const;
     void setMode(const Mode mode);
     void switchOn(void);
     void switchOff(void);
-    
-    const uint8_t getTankCapacity(void) const; // l: 0-255
-    const uint8_t getTankLoad(void) const; // %255: 0-255
-    const unsigned long getOdometerValue(void) const; // hm: 0-2**16
-    const unsigned short getRpmValue(void) const; // 
-    const uint8_t getTorqueLoad(void) const; // base 255: x-125 [-125-130]
-    const uint8_t getSpeedValue(void) const;
-    const uint8_t getFuelConsumptionValue(void) const;
-    const unsigned short getMafValue(void) const; // gr/s: x/100 = [0-655.35]
-    const unsigned short getEngineFuelRateValue(void) const; // l/h: x/20 = [0-3212.75]
+
+    uint8_t getTankCapacity(void) const; // l: 0-255
+    uint8_t getTankLoad(void) const; // native CAN: litres 0-126 (was %255 on OBD)
+    unsigned long getOdometerValue(void) const; // native CAN: km integer (was hm on OBD)
+    unsigned short getRpmValue(void) const; // raw = rpm*4
+    uint8_t getSpeedValue(void) const; // km/h
     //void getKeyPosition(void) const;
-    const uint8_t getHandbrakePosition(void) const;
-    const uint8_t getGearPosition(void) const;
+    uint8_t getHandbrakePosition(void) const;
+    uint8_t getGearPosition(void) const;
+    uint8_t getIgnition(void) const; // Klemme 15: 0/1
+    unsigned short getConsumptionCounter(void) const; // native: MO5_Verbrauch raw µl (15-bit, rolling)
 
     void update(void);
 
@@ -70,9 +66,9 @@ class CarEvent {
     virtual void _switchOff(void) =0;
     virtual void _update(void) =0;
 
-    virtual const uint8_t _readByte(void) const =0;
-    virtual const unsigned short _readShort(void) const =0;
-    virtual const unsigned long _readLong(void) const =0;
+    virtual uint8_t _readByte(void) const =0;
+    virtual unsigned short _readShort(void) const =0;
+    virtual unsigned long _readLong(void) const =0;
 
     Mode _mode;
     Sensor _sensor;
@@ -81,6 +77,8 @@ class CarEvent {
 
 
 #include "CarEventCan.h"
+#include "CarEventCanVwPq.h"
+#include "CarEventTwaiVwPq.h"   // ESP32 native-TWAI backend (compiled only under ARDUINO_ARCH_ESP32)
 #include "CarEventStream.hpp"
 #include "CarEventHardware.hpp"
 

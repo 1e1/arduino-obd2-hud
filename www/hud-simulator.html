@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VW HUD — Simulator</title>
+<style>
+  :root{
+    --bg:#0c0f13; --panel:#151a21; --panel2:#1b222b; --line:#2a323d;
+    --txt:#dfe7ef; --muted:#8c98a6; --accent:#39e0c8; --accent2:#6cc0ff;
+    --oled:#8fe9ff; --oledbg:#04070a; --warn:#ffb44d; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:radial-gradient(1200px 700px at 70% -10%,#16202b 0,var(--bg) 60%);color:var(--txt);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header.top{padding:22px 26px 6px}
+  header.top h1{margin:0;font-size:20px;letter-spacing:.3px}
+  header.top h1 span{color:var(--accent)}
+  header.top p{margin:4px 0 0;color:var(--muted);font-size:13px}
+  main{padding:18px 26px 60px;display:grid;gap:18px;grid-template-columns:340px 1fr;align-items:start}
+  @media(max-width:960px){main{grid-template-columns:1fr}}
+
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .card h2{margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+
+  .ctl{margin-bottom:14px}
+  .ctl.out label b{color:var(--muted)}
+  .ctl label{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:5px}
+  .ctl label b{color:var(--accent2);font-variant-numeric:tabular-nums;font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  input[type=range]:disabled{opacity:.55}
+  .pedal input{accent-color:var(--warn)}
+  .toggles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tg{display:flex;align-items:center;gap:8px;background:#10151b;border:1px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer;user-select:none;font-size:13px}
+  .tg input{accent-color:var(--accent);width:16px;height:16px}
+  .tg.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .gears{display:flex;gap:6px;flex-wrap:wrap}
+  .gears button{flex:1;min-width:34px;background:#10151b;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px 0;cursor:pointer;font-weight:600}
+  .gears button.on{background:var(--accent);color:#06231f;border-color:var(--accent)}
+  .gears.auto button{opacity:.6;cursor:default}
+  .gears.auto button.on{opacity:1}
+  .hint{color:var(--muted);font-size:12px;margin-top:2px}
+  .hide{display:none}
+  .modebar{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px;background:#10151b;border:1px solid var(--line);border-radius:10px}
+  .modebar .tg{flex:0 0 auto;background:transparent;border:none;padding:0}
+
+  .stage{display:grid;gap:18px}
+  .hero{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .screen-wrap{position:relative;border-radius:12px;padding:14px;background:#06090d;border:1px solid var(--line)}
+  canvas{display:block;image-rendering:pixelated;border-radius:6px;background:var(--oledbg)}
+  .hero canvas{filter:drop-shadow(0 0 7px rgba(120,230,255,.45))}
+  .statebadge{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--muted)}
+  .statebadge .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  .statebadge b{color:var(--txt);font-size:16px;text-transform:capitalize}
+
+  .flow{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+  .node{flex:1;min-width:150px;background:#0e131a;border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;transition:.18s;opacity:.5;filter:grayscale(.7)}
+  .node.active{opacity:1;filter:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset,0 0 24px rgba(57,224,200,.15)}
+  .node .nm{font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .node .nm em{font-style:normal;font-size:10px;color:var(--accent);opacity:0;text-transform:uppercase;letter-spacing:.1em}
+  .node.active .nm em{opacity:1}
+  .node .sub{font-size:11px;color:var(--muted);min-height:28px}
+  .arrow{align-self:center;color:var(--muted);font-size:18px;padding:0 2px}
+  .legend{color:var(--muted);font-size:12px;margin-top:10px;line-height:1.7}
+  .legend code{background:#10151b;border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--accent2)}
+  .pill{display:inline-block;background:#10151b;border:1px solid var(--line);border-radius:20px;padding:2px 10px;color:var(--muted);font-size:11px}
+
+  .boards{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .boards button{background:#10151b;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px 12px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
+  .boards button:hover{border-color:var(--accent2)}
+  .boards button.on{background:var(--accent);color:#06231f;border-color:var(--accent)}
+  .caps{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .caps b{color:var(--accent2);font-weight:600}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>VW <span>Head-Up Display</span> — Simulator</h1>
+  <p>VW Sharan TSI 1.5 (PQ) · OLED 128×64 · zoning &amp; state machine driven by native CAN signals. <span class="pill">local demo</span></p>
+</header>
+
+<main>
+  <section class="card" id="controls">
+    <h2>Signals</h2>
+
+    <div class="modebar" id="devicebar">
+      <button id="btn-serial" type="button" style="padding:6px 12px;border-radius:8px;border:1px solid var(--txt);background:transparent;color:var(--txt);cursor:pointer;font:inherit">🔌 Connect device</button>
+      <span class="hint" id="serial-status" style="margin:0">Web&nbsp;Serial: not connected</span>
+    </div>
+
+    <div class="modebar">
+      <label class="tg" id="tg-pedal"><input type="checkbox" id="pedal"> Pedal mode</label>
+      <span class="hint" style="margin:0">simulated driving (engine inertia + auto gearbox)</span>
+    </div>
+
+    <div class="ctl pedal hide" id="row-pedalv">
+      <label>Pedal <b><span id="v-pedalv">0</span> %</b></label>
+      <input type="range" id="pedalv" min="-100" max="100" step="1" value="0">
+      <div class="hint">−100 brake / engine braking · 0 coast · +100 throttle</div>
+    </div>
+
+    <div class="toggles" style="margin-bottom:14px">
+      <label class="tg" id="tg-power"><input type="checkbox" id="power" checked> Power</label>
+      <label class="tg" id="tg-bus"><input type="checkbox" id="bus"> Bus activity</label>
+      <label class="tg" id="tg-contact"><input type="checkbox" id="contact" checked> Ignition (Klemme&nbsp;15)</label>
+      <label class="tg" id="tg-hand"><input type="checkbox" id="handbrake"> Handbrake</label>
+    </div>
+
+    <div class="ctl" id="row-rpm">
+      <label>RPM <b><span id="v-rpm">2400</span> rpm</b></label>
+      <input type="range" id="rpm" min="0" max="8000" step="50" value="2400">
+    </div>
+    <div class="ctl" id="row-speed">
+      <label>Speed <b><span id="v-speed">84</span> km/h</b></label>
+      <input type="range" id="speed" min="0" max="220" step="1" value="84">
+    </div>
+    <div class="ctl" id="row-cons">
+      <label>Instant consumption <b><span id="v-cons">6.4</span> l/100</b></label>
+      <input type="range" id="cons" min="0" max="280" step="1" value="64">
+    </div>
+
+    <div class="ctl">
+      <label>Engaged gear</label>
+      <div class="gears" id="gears">
+        <button data-g="8">N</button><button data-g="9">R</button>
+        <button data-g="1">1</button><button data-g="2">2</button>
+        <button data-g="3" class="on">3</button><button data-g="4">4</button>
+        <button data-g="5">5</button><button data-g="6">6</button>
+      </div>
+    </div>
+
+    <div class="ctl">
+      <label>Fuel <b><span id="v-fuel">38</span> / 70 L</b></label>
+      <input type="range" id="fuel" min="0" max="70" step="1" value="38">
+    </div>
+    <div class="ctl">
+      <label>Fuel at start <b><span id="v-fuel0">45</span> L</b></label>
+      <input type="range" id="fuel0" min="0" max="70" step="1" value="45">
+    </div>
+    <div class="ctl">
+      <label>Odometer <b><span id="v-odo">142537.4</span> km</b></label>
+      <input type="range" id="odo" min="0" max="4000000" step="1" value="1425374">
+      <div class="hint">slider in hectometres (0.1 km); the bus carries km only (Kilometerstand) — the 0.1 km is the simulator's</div>
+    </div>
+    <div class="ctl">
+      <label>Trip distance <b><span id="v-trip">198.3</span> km</b></label>
+      <input type="range" id="trip" min="0" max="9999" step="1" value="1983">
+    </div>
+    <div class="ctl">
+      <label>Trip duration <b><span id="v-dur">1:13</span></b></label>
+      <input type="range" id="dur" min="0" max="600" step="1" value="73">
+    </div>
+
+    <h2 style="margin-top:18px">Nice-to-have (CAN)</h2>
+    <div class="toggles">
+      <label class="tg" id="tg-belt"><input type="checkbox" id="belt" checked> Driver seatbelt</label>
+      <label class="tg" id="tg-pass"><input type="checkbox" id="pass"> Passenger present</label>
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="card">
+      <h2>Target board</h2>
+      <div class="boards" id="boards"></div>
+      <div class="caps" id="boardCaps"></div>
+    </div>
+
+    <div class="card hero">
+      <h2 style="align-self:flex-start">Active screen</h2>
+      <div class="screen-wrap"><canvas id="hero" width="896" height="448"></canvas></div>
+      <div class="statebadge"><span class="dot"></span> current state: <b id="stateName">drive</b></div>
+    </div>
+
+    <div class="card">
+      <h2>Workflow — one screen per state</h2>
+      <div class="flow" id="flow"></div>
+      <div class="legend">
+        <b style="color:var(--txt)">Transitions</b><br>
+        off = no power · deep sleep = ignition off (screen off) · ignition check = wake on bus activity, screen <em>stays off</em> until ignition is confirmed.<br>
+        <code>idle = ignition AND (RPM=0 OR handbrake ON)</code><br>
+        <code>drive = ignition AND (RPM&gt;0 AND handbrake OFF)</code>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const OLED='#8fe9ff', OLEDBG='#04070a';
+const W=128, H=64, GAUGE=10, WIN=64;
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+
+/* ---- signals ---- */
+const S = {
+  power:true, bus:false, contact:true, handbrake:false,
+  rpm:2400, speed:84, cons:64, gear:3,
+  fuelL:38, fuel0L:45, odoHm:1425374, tripHm:1983, durMin:73,
+  belt:true, pass:false,
+  booted:false, bootProgress:0,
+  pedalMode:false, pedalv:0,
+  vin:'WVWZZZ7NZJV000123',          // sample 17-char VIN (read listen-only from Ident 0x5D2, muxed)
+};
+const GEAR_LABEL={1:'1',2:'2',3:'3',4:'4',5:'5',6:'6',8:'N',9:'R'};
+
+/* ---- target boards: capabilities the sim reflects live (see design-constraints memory) ----
+   vin: VIN row populated (needs the spare RAM/flash to collect the muxed Ident frame).
+   fps: display refresh capability (also caps the animation loop).
+   buffer: OLED buffer tier (page mode on the constrained 2-tier boards, full buffer above). */
+const BOARDS=[
+  {id:'nano328',  label:'Nano (328)',      vin:false, fps:15, buffer:'page'},
+  {id:'nanoevery',label:'Nano Every',      vin:true,  fps:25, buffer:'page'},
+  {id:'samd21',   label:'XIAO SAMD21',     vin:true,  fps:40, buffer:'full'},
+  {id:'esp32c3',  label:'XIAO ESP32-C3',   vin:true,  fps:60, buffer:'full'},
+  {id:'rp2040',   label:'RP2040 / CANBed', vin:true,  fps:60, buffer:'full'},
+];
+let board=BOARDS.find(b=>b.id==='rp2040');   // default: the enclosure's target board (VIN on)
+
+/* ---- sliding window (64 frames × 64 ms ≈ 4.096 s) ---- */
+const ring={rpm:new Uint16Array(WIN),speed:new Uint8Array(WIN),cons:new Uint16Array(WIN)};
+let frameIndex=0;
+let pedalActive=false;   // the pedal model only advances during interaction
+function pushSamples(){
+  ring.rpm[frameIndex]=S.rpm; ring.speed[frameIndex]=Math.min(255,S.speed); ring.cons[frameIndex]=S.cons;
+  frameIndex=(frameIndex+1)&(WIN-1);
+}
+function minMax(a){let mn=a[0],mx=a[0];for(let i=1;i<WIN;i++){const v=a[i];if(v<mn)mn=v;if(v>mx)mx=v;}return{min:mn,max:mx};}
+
+/* ---- state machine ---- */
+function computeState(){
+  if(!S.power) return 'eteint';
+  if(!S.contact) return S.bus?'confirmation':'veille';
+  if(!S.booted) return 'boot';
+  return (S.rpm===0 || S.handbrake) ? 'arret' : 'conduite';
+}
+
+/* =========================================================================
+   Rendering: everything is drawn at 1x on a 128x64 canvas, then upscaled
+   without smoothing (image-rendering:pixelated) -> crisp OLED-like pixels.
+   ========================================================================= */
+const off=document.createElement('canvas'); off.width=W; off.height=H;
+const oc=off.getContext('2d');
+const P={
+  clear(){ oc.globalCompositeOperation='source-over'; oc.fillStyle=OLEDBG; oc.fillRect(0,0,W,H); },
+  fg(){ oc.globalCompositeOperation='source-over'; oc.fillStyle=OLED; },
+  bg(){ oc.globalCompositeOperation='source-over'; oc.fillStyle=OLEDBG; },
+  px(x,y){ oc.fillRect(x|0,y|0,1,1); },
+  hline(x,y,len){ if(len>0) oc.fillRect(x|0,y|0,len|0,1); },
+  vline(x,y,len){ if(len>0) oc.fillRect(x|0,y|0,1,len|0); },
+  box(x,y,w,h){ if(w>0&&h>0) oc.fillRect(x|0,y|0,w|0,h|0); },
+  frame(x,y,w,h){ P.hline(x,y,w);P.hline(x,y+h-1,w);P.vline(x,y,h);P.vline(x+w-1,y,h); },
+  text(x,y,str,px,align){ bmpText(PF12,x,y,str,align); },
+  text10(x,y,str,align){ bmpText(PF10,x,y,str,align); },
+  xtext(x,y,str,px){ oc.save(); oc.globalCompositeOperation='difference'; oc.fillStyle=OLED; bmpText(PF12,x,y,str,'left'); oc.restore(); },
+  xtext10(x,y,str){ oc.save(); oc.globalCompositeOperation='difference'; oc.fillStyle=OLED; bmpText(PF10,x,y,str,'left'); oc.restore(); },
+};
+
+/* Instantaneous speed: drawn as real pixels (fillRect runs) from the u8g2
+   logisoso28 bitmap -> pixel-perfect, identical to the OLED, no text anti-aliasing. */
+const SPEEDGLYPHS={"0":[14,28,[1008,2040,4092,8190,15903,15375,15375,15375,15375,15375,15375,15375,15375,15375,15375,15375,15375,15375,15375,15375,15375,15375,15375,15903,8190,4092,2040,1008]],"1":[8,28,[15,15,31,31,127,255,255,239,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]],"2":[14,28,[496,2040,4092,8190,15902,15375,15375,15375,15375,14351,4126,60,60,120,248,240,480,992,960,1920,1920,3840,7680,7680,16383,16383,16383,16383]],"3":[14,28,[16383,16383,16383,16383,30,30,60,120,120,240,480,496,508,510,62,15,15,15,15,15,15,15,2063,15390,16382,8188,4088,992]],"4":[14,28,[448,960,960,960,896,1920,1920,1920,1792,3840,3840,3840,3584,7680,7800,7800,7288,15480,15480,16383,16383,16383,16383,120,120,120,120,120]],"5":[14,28,[16383,16383,16383,16383,15360,15360,15360,15360,15360,15360,16376,16380,16382,15902,15375,15375,15,15,15,15,15,15375,15375,15903,8190,4092,2040,1008]],"6":[14,28,[1008,2040,4092,8190,15903,15375,15375,15360,15360,15360,15360,16376,16380,16382,15902,15375,15375,15375,15375,15375,15375,15375,15375,15903,8190,4092,2040,1008]],"7":[14,28,[16383,16383,16383,16383,15375,15390,15390,30,30,60,60,60,60,120,120,120,120,240,240,240,496,480,480,480,960,960,960,960]],"8":[14,28,[1008,2040,4092,8190,15902,15375,15375,15375,15375,15375,15375,15902,8190,4092,4092,8190,7710,15375,15375,15375,15375,15375,15375,15903,8190,4092,2040,1008]],"9":[14,28,[1008,2040,4092,8190,15903,15375,15375,15375,15375,15375,15375,15375,15375,7711,8191,4095,2047,15,15,15,15,15375,15375,15903,8190,4092,2040,1008]]};
+function bigSpeed(xc,base,str){
+  P.fg();
+  const cell=16, x0=Math.round(xc-(str.length*cell)/2);
+  for(let i=0;i<str.length;i++){
+    const g=SPEEDGLYPHS[str[i]]; if(!g) continue;
+    const w=g[0], h=g[1], rows=g[2], gx=x0+i*cell+((cell-w)>>1), gy=base-h;
+    for(let r=0;r<h;r++){ let bits=rows[r], c=0;
+      while(c<w){ if((bits>>(w-1-c))&1){ let len=1; while(c+len<w && ((bits>>(w-1-c-len))&1)) len++;
+        oc.fillRect(gx+c, gy+r, len, 1); c+=len; } else c++; } } }
+}
+
+/* Bitmap text fonts decoded from the u8g2 BDF sources used by the OLED firmware:
+   PF12 = profont12_tr (labels, gear, averages), PF10 = profont10_tn (trip, fuel).
+   ProFont (c) Osterwald/Gilardi/Welch - MIT. Drawn as fillRect pixels (no anti-aliasing). */
+const PF12={"DW":6," ":[0,0,0,0,6,[]],"!":[1,8,2,0,6,[1,1,1,1,1,1,0,1]],"\"":[3,3,1,6,6,[5,5,5]],"#":[5,5,0,3,6,[10,31,10,31,10]],"$":[5,10,0,-1,6,[4,14,21,20,14,5,5,21,14,4]],"%":[5,8,0,0,6,[15,21,21,10,6,13,21,18]],"&":[5,8,0,0,6,[12,18,20,8,20,21,18,13]],"'":[1,3,2,6,6,[1,1,1]],"(":[3,10,1,-1,6,[1,2,4,4,4,4,4,4,2,1]],")":[3,10,1,-1,6,[4,2,1,1,1,1,1,1,2,4]],"*":[5,5,0,3,6,[4,21,14,21,4]],"+":[5,5,0,1,6,[4,4,31,4,4]],",":[2,4,1,-2,6,[3,3,1,2]],"-":[3,1,1,3,6,[7]],".":[2,2,2,0,6,[3,3]],"/":[5,10,0,-2,6,[1,1,2,2,4,4,8,8,16,16]],"0":[5,8,0,0,6,[14,17,19,21,25,17,17,14]],"1":[5,8,0,0,6,[4,28,4,4,4,4,4,31]],"2":[5,8,0,0,6,[14,17,1,2,4,8,16,31]],"3":[5,8,0,0,6,[14,17,1,6,1,1,17,14]],"4":[5,8,0,0,6,[2,6,10,18,31,2,2,7]],"5":[5,8,0,0,6,[31,16,16,30,1,1,17,14]],"6":[5,8,0,0,6,[14,16,16,30,17,17,17,14]],"7":[5,8,0,0,6,[31,1,1,2,4,4,4,4]],"8":[5,8,0,0,6,[14,17,17,14,17,17,17,14]],"9":[5,8,0,0,6,[14,17,17,17,15,1,1,14]],":":[2,6,2,0,6,[3,3,0,0,3,3]],";":[2,8,1,-2,6,[3,3,0,0,3,3,1,2]],"<":[4,7,1,1,6,[1,2,4,8,4,2,1]],"=":[5,3,0,3,6,[31,0,31]],">":[4,7,1,1,6,[8,4,2,1,2,4,8]],"?":[5,8,0,0,6,[14,17,1,1,2,4,0,4]],"@":[5,8,0,0,6,[14,17,23,21,23,16,16,15]],"A":[5,8,0,0,6,[4,10,10,17,17,31,17,17]],"B":[5,8,0,0,6,[30,17,17,30,17,17,17,30]],"C":[5,8,0,0,6,[14,17,16,16,16,16,17,14]],"D":[5,8,0,0,6,[30,17,17,17,17,17,17,30]],"E":[5,8,0,0,6,[31,16,16,30,16,16,16,31]],"F":[5,8,0,0,6,[31,16,16,30,16,16,16,16]],"G":[5,8,0,0,6,[14,17,16,16,19,17,17,14]],"H":[5,8,0,0,6,[17,17,17,31,17,17,17,17]],"I":[5,8,0,0,6,[31,4,4,4,4,4,4,31]],"J":[5,8,0,0,6,[1,1,1,1,1,17,17,14]],"K":[5,8,0,0,6,[17,18,20,24,24,20,18,17]],"L":[5,8,0,0,6,[16,16,16,16,16,16,16,31]],"M":[5,8,0,0,6,[17,27,21,21,17,17,17,17]],"N":[5,8,0,0,6,[17,25,21,19,17,17,17,17]],"O":[5,8,0,0,6,[14,17,17,17,17,17,17,14]],"P":[5,8,0,0,6,[30,17,17,30,16,16,16,16]],"Q":[5,9,0,-1,6,[14,17,17,17,17,17,21,14,1]],"R":[5,8,0,0,6,[30,17,17,30,17,17,17,17]],"S":[5,8,0,0,6,[14,17,16,14,1,1,17,14]],"T":[5,8,0,0,6,[31,4,4,4,4,4,4,4]],"U":[5,8,0,0,6,[17,17,17,17,17,17,17,14]],"V":[5,8,0,0,6,[17,17,17,17,10,10,4,4]],"W":[5,8,0,0,6,[17,17,17,17,21,21,27,17]],"X":[5,8,0,0,6,[17,17,17,10,4,10,17,17]],"Y":[5,8,0,0,6,[17,17,17,17,10,4,4,4]],"Z":[5,8,0,0,6,[31,1,2,4,8,16,16,31]],"[":[2,10,2,-1,6,[3,2,2,2,2,2,2,2,2,3]],"\\":[5,10,1,-2,6,[16,16,8,8,4,4,2,2,1,1]],"]":[2,10,1,-1,6,[3,1,1,1,1,1,1,1,1,3]],"^":[5,3,0,5,6,[4,10,17]],"_":[6,1,0,-2,6,[63]],"`":[2,2,1,7,6,[2,1]],"a":[5,5,0,0,6,[15,17,17,19,13]],"b":[5,8,0,0,6,[16,16,16,30,17,17,17,30]],"c":[5,5,0,0,6,[14,17,16,16,15]],"d":[5,8,0,0,6,[1,1,1,15,17,17,17,15]],"e":[5,5,0,0,6,[14,17,31,16,15]],"f":[4,8,1,0,6,[3,4,14,4,4,4,4,4]],"g":[5,7,0,-2,6,[15,17,17,17,15,1,14]],"h":[5,8,0,0,6,[16,16,16,30,17,17,17,17]],"i":[3,8,1,0,6,[2,0,0,6,2,2,2,7]],"j":[3,10,0,-2,6,[1,0,0,3,1,1,1,1,1,6]],"k":[5,8,0,0,6,[16,16,16,18,20,28,18,17]],"l":[3,8,1,0,6,[6,2,2,2,2,2,2,7]],"m":[5,5,0,0,6,[30,21,21,21,21]],"n":[5,5,0,0,6,[22,25,17,17,17]],"o":[5,5,0,0,6,[14,17,17,17,14]],"p":[5,7,0,-2,6,[30,17,17,17,30,16,16]],"q":[5,7,0,-2,6,[15,17,17,17,15,1,1]],"r":[5,5,0,0,6,[22,25,16,16,16]],"s":[5,5,0,0,6,[15,16,14,1,30]],"t":[4,8,1,0,6,[4,4,4,14,4,4,4,3]],"u":[5,5,0,0,6,[17,17,17,19,13]],"v":[5,5,0,0,6,[17,17,10,10,4]],"w":[5,5,0,0,6,[21,21,21,21,10]],"x":[5,5,0,0,6,[17,10,4,10,17]],"y":[5,7,0,-2,6,[17,17,17,17,15,1,14]],"z":[5,5,0,0,6,[31,2,4,8,31]],"{":[3,11,1,-2,6,[1,2,2,2,2,4,2,2,2,2,1]],"|":[1,10,2,-1,6,[1,1,1,1,1,1,1,1,1,1]],"}":[3,11,1,-2,6,[4,2,2,2,2,1,2,2,2,2,4]],"~":[5,2,0,4,6,[13,22]]};
+const PF10={"DW":5," ":[0,0,0,0,5,[]],"+":[3,3,0,1,5,[2,7,2]],"-":[2,1,1,2,5,[3]],".":[1,1,2,0,5,[1]],"/":[4,8,0,-2,5,[1,1,2,2,4,4,8,8]],"0":[4,6,0,0,5,[6,9,11,13,9,6]],"1":[3,6,1,0,5,[2,6,2,2,2,7]],"2":[4,6,0,0,5,[6,9,1,2,4,15]],"3":[4,6,0,0,5,[6,9,2,1,9,6]],"4":[4,6,0,0,5,[2,6,10,15,2,7]],"5":[4,6,0,0,5,[15,8,14,1,9,6]],"6":[4,6,0,0,5,[6,8,14,9,9,6]],"7":[4,6,0,0,5,[15,1,2,4,4,4]],"8":[4,6,0,0,5,[6,9,6,9,9,6]],"9":[4,6,0,0,5,[6,9,9,7,1,6]],":":[1,4,2,0,5,[1,0,0,1]]};
+function bmpText(font,x,y,str,align){
+  let width=0; for(const ch of str){ const g=font[ch]; width += g?g[4]:font.DW; }
+  let cx = align==='right' ? x-width : align==='center' ? Math.round(x-width/2) : x;
+  for(const ch of str){ const g=font[ch];
+    if(!g){ cx+=font.DW; continue; }
+    const w=g[0],h=g[1],xo=g[2],yo=g[3],dw=g[4],rows=g[5], top=y-h-yo;
+    for(let r=0;r<h;r++){ let bits=rows[r], c=0;
+      while(c<w){ if((bits>>(w-1-c))&1){ let len=1; while(c+len<w && ((bits>>(w-1-c-len))&1)) len++;
+        oc.fillRect(cx+xo+c, top+r, len, 1); c+=len; } else c++; } }
+    cx+=dw; }
+}
+
+function drawTrip(idle){
+  const y0=51; P.fg();
+  const d=S.tripHm,km=Math.floor(d/10),hm=d-10*km; let left=km+'.'+hm;
+  // initial odometer display disabled (idle): keep only the trip distance
+  // if(idle){const o=S.odoHm-S.tripHm,ok=Math.floor(o/10),oh=o-10*ok; left+=' +'+ok+'.'+oh;}
+  P.text10(0,y0,left,'left');
+  const h=Math.floor(S.durMin/60),m=S.durMin-60*h;
+  P.text10(W,y0,h+':'+String(m).padStart(2,'0'),'right');
+}
+const load255=L=>clamp(Math.round(L/70*255),0,255);
+function drawTank(idle){
+  const y0=H-GAUGE; P.fg();
+  P.vline(0,y0+1,GAUGE-2); P.vline(W-1,y0+1,GAUGE-2); P.hline(1,y0,W-2); P.hline(1,H-1,W-2);
+  const firstSep=(load255(S.fuel0L)*(W-1))>>8; P.vline(firstSep,y0+1,GAUGE-2);
+  const curSep=(load255(S.fuelL)*(W-1))>>8;
+  if(curSep>1) P.box(1,y0+1,curSep-1,GAUGE-2);
+  P.vline(curSep,y0+2,GAUGE-4);
+
+  if(!idle){
+    const mm=minMax(ring.cons);
+    const min=Math.round(mm.min/10),max=Math.round(mm.max/10),inst=Math.round(S.cons/10);
+    if(curSep>min){
+      const xmin=curSep-min; P.bg(); P.vline(xmin,y0+3,GAUGE-6);
+      if(min<max){P.px(xmin-1,y0+3);P.px(xmin-1,H-4);}
+      if(curSep>max){
+        const xmax=curSep-max; P.vline(xmax,y0+3,GAUGE-6);
+        if(min+1<max){P.px(xmax+1,y0+3);P.px(xmax+1,H-4);P.hline(xmax+1,y0+2,xmin-xmax-1);P.hline(xmax+1,H-3,xmin-xmax-1);}
+      } else { P.hline(0,y0+2,xmin);P.hline(0,H-3,xmin); }
+      if(curSep>inst) P.vline(curSep-inst,y0+1,GAUGE-2);
+      P.fg();
+    }
+  } else {
+    // remaining: carved / negative (setDrawColor 0)
+    P.bg(); P.text10(2,H-2,String(Math.round(S.fuelL)),'left');
+    // consumed: XOR (setDrawColor 2)
+    const burnt=Math.max(0,Math.round(S.fuel0L-S.fuelL)), lbl=String(burnt);
+    const x = firstSep < W-22 ? firstSep+3 : firstSep-22;
+    P.xtext10(x,H-2,lbl);
+    P.fg();
+  }
+}
+
+function drawBoot(){
+  P.clear(); P.fg();
+  P.text(W/2,18,'VW  HUD',8,'center','700');
+  P.frame(14,30,100,8); P.box(16,32,Math.round(96*S.bootProgress),4);
+  const okF=S.bootProgress>.45, okO=S.bootProgress>.85;
+  P.text(18,52,(okF?'ok':'..')+' fuel',8,'left');
+  P.text(18,61,(okO?'ok':'..')+' odometer',8,'left');
+}
+
+function drawGear(g){
+  const pos={'1':[123,32],'2':[105,32],'3':[18,22],'4':[0,22],'5':[0,32],'N':[18,32],'R':[18,32]};
+  const p=pos[g]; if(p) P.text(p[0],p[1],g,8,'left','700');
+}
+function drawDrive(){
+  P.clear(); P.fg();
+  const x1=Math.min(W-2,S.rpm>>6);
+  const mm=minMax(ring.rpm), xmin=Math.min(W-2,mm.min>>6), xmax=Math.min(W-2,mm.max>>6);
+  P.vline(0,1,GAUGE-2); P.vline(1,2,GAUGE-4);
+  P.hline(1,0,x1);P.hline(1,1,x1);P.hline(1,GAUGE-2,x1);P.hline(1,GAUGE-1,x1);
+  P.vline(x1-1,0,GAUGE+2);P.vline(x1,GAUGE+1,2);P.vline(x1+1,0,GAUGE+2);
+  if(xmax-xmin>3) P.box(xmin+1,3,xmax-xmin-1,4);
+  P.vline(xmin,4,2);P.vline(xmax,4,2);
+  P.bg(); P.vline(x1,0,GAUGE+1); P.fg();
+
+  bigSpeed(64,42,String(Math.round(S.speed)));
+  const ms=minMax(ring.speed); if(Math.round(S.speed)<ms.max-3) P.text(W,22,String(ms.max),8,'right');
+  const g=GEAR_LABEL[S.gear]; if(g) drawGear(g);
+  if(!S.belt && ((frameIndex>>2)&1)) P.text(2,9,'!',8,'left');
+  drawTrip(false); drawTank(false);
+}
+/* IDLE (arrêt) — fixed grid across every board (see doc/zones-idle.svg).
+   V1 VIN row is ALWAYS reserved; it is only POPULATED when the board is VIN-capable.
+   On a non-capable board (Nano 328) the row stays BLANK — nothing reflows. */
+function drawIdle(){
+  P.clear(); P.fg();
+  // --- above the rule: vehicle identity ---
+  if(board.vin) P.text(64,8,S.vin,8,'center');            // V1 — VIN (blank on non-capable boards; row reserved)
+  P.text(64,18,Math.floor(S.odoHm/10)+' km',8,'center');  // O1 — total odometer (km)
+  P.hline(0,20,W);                                        // thin rule: identity (above) | trip (below)
+  // --- below the rule ---
+  const distKm=S.tripHm/10, burnt=Math.max(0,S.fuel0L-S.fuelL);
+  // A1 avg speed (left, km/h) · A2 avg consumption (right, l/100) — averages (idle-specific)
+  P.text(0,37,(S.durMin>0?Math.round(distKm/(S.durMin/60)):0)+' km/h',8,'left');
+  P.text(W+1,37,(distKm>0?(100*burnt/distKm):0).toFixed(1)+' l/100',8,'right');  // +1px: glyph ink flush to col 127 (trailing inter-char blank falls off-screen), symmetric with A1-left
+  // T1 distance · T2 time — SAME as DRIVE (shared drawTrip → y51, PF10, no units)
+  drawTrip(true);
+  // F — fuel bar: F1 cursor / F2 start separator / F3 fuel-left carved / F4 burnt XOR
+  drawTank(true);
+}
+function drawDark(label){ P.clear(); oc.save(); oc.globalAlpha=.28; P.fg();
+  bmpText(PF12, W/2, 36, label, 'center'); oc.restore(); }
+
+function renderScreen(canvas,state){
+  switch(state){
+    case 'eteint': drawDark('no power'); break;
+    case 'veille': drawDark('deep sleep'); break;
+    case 'confirmation': drawDark('ignition?'); break;
+    case 'boot': drawBoot(); break;
+    case 'arret': drawIdle(); break;
+    case 'conduite': drawDrive(); break;
+  }
+  const ctx=canvas.getContext('2d'); ctx.imageSmoothingEnabled=false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(off,0,0,W,H,0,0,canvas.width,canvas.height);
+}
+
+/* ---- workflow ---- */
+const STATES=[
+  {id:'eteint',nm:'off',sub:'no power'},
+  {id:'veille',nm:'deep sleep',sub:'ignition off · screen off'},
+  {id:'confirmation',nm:'ignition check',sub:'bus wake · screen off'},
+  {id:'boot',nm:'boot',sub:'sync fuel + odometer'},
+  {id:'conduite',nm:'drive',sub:'RPM>0 AND handbrake OFF'},
+  {id:'arret',nm:'idle',sub:'RPM=0 OR handbrake ON'},
+];
+const flow=document.getElementById('flow'), nodeCanvas={};
+STATES.forEach((st,i)=>{
+  const node=document.createElement('div'); node.className='node'; node.id='node-'+st.id;
+  node.innerHTML=`<div class="nm"><span>${st.nm}</span><em>actif</em></div><div class="sub">${st.sub}</div>`;
+  const cv=document.createElement('canvas'); cv.width=W*2; cv.height=H*2; node.appendChild(cv); nodeCanvas[st.id]=cv;
+  flow.appendChild(node);
+  if(i<STATES.length-1){const a=document.createElement('div');a.className='arrow';a.textContent='›';flow.appendChild(a);}
+});
+
+/* ---- target-board selector ---- */
+const boardsEl=document.getElementById('boards'), boardCapsEl=document.getElementById('boardCaps');
+function renderCaps(){
+  boardCapsEl.innerHTML='VIN: <b>'+(board.vin?'yes':'no')+'</b> · <b>~'+board.fps+' fps</b> · '
+    +(board.buffer==='full'?'full buffer':'page buffer');
+}
+BOARDS.forEach(b=>{
+  const btn=document.createElement('button'); btn.type='button'; btn.textContent=b.label;
+  btn.classList.toggle('on',b.id===board.id);
+  btn.addEventListener('click',()=>{
+    board=b;
+    [...boardsEl.children].forEach(c=>c.classList.toggle('on',c===btn));
+    renderCaps();
+  });
+  boardsEl.appendChild(btn);
+});
+renderCaps();
+
+/* =========================================================================
+   Pedal model -- engine inertia + auto gearbox + fuel cut-off.
+   ========================================================================= */
+const IDLE_RPM=850;
+const GEAR_MULT={1:95,2:55,3:38,4:28,5:22,6:18};   // tr/min par km/h (approx)
+function gearForSpeed(v){ return v<14?1: v<32?2: v<52?3: v<78?4: v<110?5: 6; }
+function physicsStep(){
+  const dt=0.064;
+  const pedal=S.pedalv/100;                         // -1..+1
+  const thr=Math.max(0,pedal), brk=Math.max(0,-pedal);
+  const drag=0.0007*S.speed*S.speed + 0.6;          // aero + rolling drag
+  const a = thr*9 - brk*16 - drag;                  // km/h per second
+  S.speed = clamp(S.speed + a*dt, 0, 220);
+
+  S.gear = gearForSpeed(S.speed);
+  // target rpm: coupled to speed (gear) + transient over-rev on throttle
+  let target = IDLE_RPM + S.speed*GEAR_MULT[S.gear] + thr*1100;
+  if(S.speed<1 && thr>0) target = IDLE_RPM + thr*3500; // throttle blip at standstill
+  target = clamp(target, IDLE_RPM, 8000);   // matches the cluster needle; bar full-scale = 8192 rpm
+  S.rpm = Math.round(S.rpm + (target - S.rpm)*0.35);   // engine inertia (reacts fast)
+
+  // instant consumption (px = l/100 ×10)
+  let consL100;
+  if(brk>0.05 || (thr<0.03 && S.speed>4)) consL100=0;       // engine braking -> fuel cut-off
+  else if(S.speed<3) consL100=1.0;                          // idle
+  else consL100 = 4 + thr*16 + (S.speed<30?(30-S.speed)*0.18:0); // acceleration + low-speed pull
+  S.cons = clamp(Math.round(consL100*10), 0, 280);
+}
+
+/* ---- 64 ms loop ---- */
+const hero=document.getElementById('hero');
+const base={rpm:2400,speed:84,cons:64};
+function tick(){
+  if(S.power && S.contact){
+    if(!S.booted){ S.bootProgress=Math.min(1,S.bootProgress+0.035); if(S.bootProgress>=1) S.booted=true; }
+  } else { S.booted=false; S.bootProgress=0; }
+
+  if(S.pedalMode){
+    if(pedalActive) physicsStep();
+    syncOutputs();
+  } else {
+    S.rpm=base.rpm; S.speed=base.speed; S.cons=base.cons;
+  }
+
+  pushSamples();
+  const state=computeState();
+  document.getElementById('stateName').textContent=STATES.find(s=>s.id===state).nm;
+  // hero refresh capped to the selected board's FPS (display-refresh capability)
+  const now=performance.now();
+  if(now-lastHeroDraw >= 1000/board.fps - 1){ lastHeroDraw=now; renderScreen(hero,state); }
+  STATES.forEach(st=>{ renderScreen(nodeCanvas[st.id],st.id);
+    document.getElementById('node-'+st.id).classList.toggle('active',st.id===state); });
+  pushSerial();
+}
+let lastHeroDraw=0;
+setInterval(tick,64);
+
+/* mirror the pedal model outputs into the UI */
+function syncOutputs(){
+  setRange('rpm',S.rpm); setRange('speed',Math.round(S.speed)); setRange('cons',S.cons,(S.cons/10).toFixed(1));
+  document.querySelectorAll('#gears button').forEach(b=>b.classList.toggle('on',Number(b.dataset.g)===S.gear));
+}
+function setRange(id,val,disp){ const el=document.getElementById(id),o=document.getElementById('v-'+id);
+  el.value=val; if(o) o.textContent=disp!==undefined?disp:val; }
+
+/* ---- UI bindings ---- */
+function bindRange(id,key,disp){
+  const el=document.getElementById(id),out=document.getElementById('v-'+id);
+  const upd=()=>{ const v=Number(el.value); if(key in base) base[key]=v; S[key]=v; if(out) out.textContent=disp?disp(v):v; };
+  el.addEventListener('input',upd); upd();
+}
+bindRange('rpm','rpm'); bindRange('speed','speed'); bindRange('cons','cons',v=>(v/10).toFixed(1));
+bindRange('fuel','fuelL'); bindRange('fuel0','fuel0L');
+bindRange('odo','odoHm',v=>(v/10).toFixed(1)); bindRange('trip','tripHm',v=>(v/10).toFixed(1));
+bindRange('dur','durMin',v=>{const h=Math.floor(v/60);return h+':'+String(v-60*h).padStart(2,'0');});
+bindRange('pedalv','pedalv');
+
+const TG={power:'power',bus:'bus',contact:'contact',handbrake:'hand',belt:'belt',pass:'pass',pedal:'pedal'};
+function bindToggle(id,key){
+  const el=document.getElementById(id),wrap=document.getElementById('tg-'+TG[id]);
+  const upd=()=>{ S[key]=el.checked; if(wrap) wrap.classList.toggle('on',el.checked); };
+  el.addEventListener('change',upd); upd();
+}
+bindToggle('power','power'); bindToggle('bus','bus'); bindToggle('contact','contact');
+bindToggle('handbrake','handbrake'); bindToggle('belt','belt'); bindToggle('pass','pass');
+
+/* pedal mode: toggle the UI */
+const pedalEl=document.getElementById('pedal');
+function applyMode(){
+  S.pedalMode=pedalEl.checked;
+  document.getElementById('row-pedalv').classList.toggle('hide',!S.pedalMode);
+  ['rpm','speed','cons'].forEach(id=>{ document.getElementById(id).disabled=S.pedalMode; });
+  if(!S.pedalMode){ base.rpm=S.rpm; base.speed=S.speed; base.cons=S.cons; } // resume without a jump
+  document.getElementById('gears').classList.toggle('auto',S.pedalMode);
+}
+pedalEl.addEventListener('change',applyMode); applyMode();
+
+/* the pedal model runs only while the mouse is over the pedal area (or while dragging) */
+const rowPedal=document.getElementById('row-pedalv');
+rowPedal.addEventListener('mouseenter',()=>pedalActive=true);
+rowPedal.addEventListener('mouseleave',()=>pedalActive=false);
+document.getElementById('pedalv').addEventListener('input',()=>pedalActive=true);
+
+
+document.getElementById('gears').addEventListener('click',e=>{
+  if(S.pedalMode) return;
+  const b=e.target.closest('button'); if(!b) return;
+  S.gear=Number(b.dataset.g);
+  [...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));
+});
+
+/* =========================================================================
+   Web Serial — drive the *real* OLED montage (firmware built with VH_INPUT_STREAM).
+   Protocol: "<sensorId> <value>\n", sensorId = CarEvent::Sensor enum ordinal.
+   ========================================================================= */
+const SID = { TANK_LOAD:3, ODOMETER:4, RPM:5, VEHICLE_SPEED:9,
+              FUEL_CONSUMPTION:10, HANDBRAKE:11, GEAR_POSITION:12, IGNITION:13 };
+const SERIAL_BAUD = 115200;          // must match VH_STREAM_SPEED in the firmware
+
+let serialPort=null, serialWriter=null, serialReader=null;
+const enc=new TextEncoder();
+const lastSent={};                   // id -> last integer value written
+let consCounter=0;                   // 15-bit rolling µl counter (mirrors MO5_Verbrauch)
+const serialOn=()=>!!serialWriter;
+
+function setSerialStatus(t){ const el=document.getElementById('serial-status'); if(el) el.innerHTML='Web&nbsp;Serial: '+t; }
+
+async function serialWrite(line){
+  if(!serialWriter) return;
+  try{ await serialWriter.write(enc.encode(line)); }
+  catch(e){ console.warn('serial write failed',e); serialDisconnect(); }
+}
+function sendOnChange(id,value){ const v=value|0; if(lastSent[id]===v) return; lastSent[id]=v; serialWrite(id+' '+v+'\n'); }
+function sendAlways(id,value){ const v=value|0; lastSent[id]=v; serialWrite(id+' '+v+'\n'); }
+
+async function drainReader(){
+  try{
+    serialReader=serialPort.readable.getReader();
+    while(true){ const {done}=await serialReader.read(); if(done) break; }
+  }catch(e){}
+}
+
+async function serialConnect(){
+  if(!('serial' in navigator)){ setSerialStatus('unsupported — use Chrome/Edge'); return; }
+  try{
+    serialPort=await navigator.serial.requestPort();
+    await serialPort.open({baudRate:SERIAL_BAUD});
+    serialWriter=serialPort.writable.getWriter();
+    drainReader();                                   // discard device acks so its TX never stalls
+    Object.keys(lastSent).forEach(k=>delete lastSent[k]); consCounter=0;
+    setSerialStatus('connected @ '+SERIAL_BAUD);
+    document.getElementById('btn-serial').textContent='⏏ Disconnect device';
+    // seed boot: ignition on + the two values Workflow::_boot() waits for
+    sendAlways(SID.IGNITION,1);
+    sendOnChange(SID.TANK_LOAD,Math.round(S.fuelL));
+    sendOnChange(SID.ODOMETER,Math.round(S.odoHm/10));
+  }catch(e){ setSerialStatus('connection cancelled'); }
+}
+
+async function serialDisconnect(){
+  try{ if(serialReader){ await serialReader.cancel(); serialReader.releaseLock(); } }catch(e){}
+  try{ if(serialWriter){ serialWriter.releaseLock(); } }catch(e){}
+  try{ if(serialPort){ await serialPort.close(); } }catch(e){}
+  serialReader=null; serialWriter=null; serialPort=null;
+  setSerialStatus('not connected');
+  document.getElementById('btn-serial').textContent='🔌 Connect device';
+}
+
+/* called once per 64 ms tick: mirror the signals onto the wire */
+function pushSerial(){
+  if(!serialOn()) return;
+  const ignition=(S.power && S.contact)?1:0;
+  sendOnChange(SID.IGNITION,ignition);
+  if(!ignition) return;                              // device sleeps; nothing to stream
+
+  sendAlways(SID.RPM,Math.round(S.rpm*4));           // raw = rpm*4 ; keeps RPM fresh (RPM_ABSENT_TICKS)
+  sendOnChange(SID.VEHICLE_SPEED,Math.round(S.speed));
+
+  // fuel: integrate instant l/100 (S.cons/10) into the cumulative µl counter
+  //   µl this frame = lPer100 * speed * FRAME_DURATION_MS / 360   (inverse of Hudisplay::animationFrame)
+  const dMicroL=(S.cons/10)*S.speed*64/360;
+  consCounter=(consCounter+Math.round(dMicroL))&0x7FFF;
+  sendOnChange(SID.FUEL_CONSUMPTION,consCounter);
+
+  sendOnChange(SID.TANK_LOAD,Math.round(S.fuelL));
+  sendOnChange(SID.ODOMETER,Math.round(S.odoHm/10));
+  sendOnChange(SID.GEAR_POSITION,S.gear);
+  sendOnChange(SID.HANDBRAKE,S.handbrake?1:0);
+}
+
+if('serial' in navigator){
+  document.getElementById('btn-serial').addEventListener('click',()=>serialOn()?serialDisconnect():serialConnect());
+} else { setSerialStatus('unsupported — use Chrome/Edge'); document.getElementById('btn-serial').disabled=true; }
+
+
+tick();
+</script>
+</body>
+</html>

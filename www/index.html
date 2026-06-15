@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VW Head-Up Display</title>
+<!-- static SVG favicon (fallback); upgraded to an animated canvas favicon by the script below -->
+<link rel="icon" type="image/svg+xml" href="img/logo.svg" />
+<style>
+  :root{
+    --bg:#0c0f13; --panel:#151a21; --panel2:#1b222b; --line:#2a323d;
+    --txt:#dfe7ef; --muted:#8c98a6; --accent:#39e0c8; --accent2:#6cc0ff; --oled:#8fe9ff;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:radial-gradient(1200px 700px at 70% -10%,#16202b 0,var(--bg) 60%);
+    color:var(--txt);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:48px 24px 80px}
+  .brandrow{display:flex;align-items:center;gap:18px;margin-bottom:6px}
+  .brandrow .logo{width:76px;height:76px;flex:none}
+  header h1{font-size:34px;margin:0}
+  header h1 span{color:var(--accent)}
+  header p{color:var(--muted);max-width:70ch;font-size:16px}
+  .pill{display:inline-block;background:#10151b;border:1px solid var(--line);border-radius:20px;
+    padding:2px 10px;color:var(--muted);font-size:12px;margin-right:6px}
+  .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+  .btn{background:var(--accent);color:#06231f;border-radius:10px;padding:11px 20px;font-weight:700;font-size:15px}
+  .btn:hover{text-decoration:none;filter:brightness(1.08)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  h2.section{font-size:18px;margin:48px 0 14px}
+  table.boards{width:100%;border-collapse:collapse;background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:14px}
+  table.boards th,table.boards td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line)}
+  table.boards th{color:var(--accent);font-weight:600;background:#10151b}
+  table.boards tr:last-child td{border-bottom:0}
+  table.boards td.muted{color:var(--muted)}
+  .gallery{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:14px}
+  .gallery figure{margin:0}
+  .gallery img{width:100%;border-radius:10px;border:1px solid var(--line);display:block}
+  .gallery figcaption{color:var(--muted);font-size:12px;margin-top:6px}
+  .diagrams{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:14px}
+  .diagrams figure{margin:0}
+  .diagrams img{width:100%;display:block;border-radius:10px;border:1px solid var(--line);background:#0c0f13}
+  .diagrams figcaption{color:var(--muted);font-size:12px;margin-top:6px}
+  .plans{display:grid;gap:16px;margin-top:14px}
+  .plans figure{margin:0}
+  .plans a.sheet{display:block;background:#f7fbf2;border:1px solid var(--line);border-radius:10px;padding:10px}
+  .plans a.sheet:hover{border-color:var(--accent);text-decoration:none}
+  .plans img{width:100%;display:block;border-radius:4px}
+  .plans figcaption{color:var(--muted);font-size:12px;margin-top:6px}
+  .note{color:var(--muted);font-size:13px;margin-top:12px;max-width:90ch}
+  .note em{font-style:normal;color:var(--txt)}
+  ul.mods{margin:10px 0 0;padding-left:20px;max-width:90ch;font-size:14px}
+  ul.mods li{margin:7px 0;color:var(--muted)}
+  ul.mods li strong{color:var(--txt)}
+  ul.mods li .save{color:var(--accent)}
+  footer{margin-top:54px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:18px}
+  code{background:#10151b;border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--oled)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brandrow">
+      <img class="logo" src="img/logo.svg" alt="VW Head-Up Display logo" width="76" height="76" />
+      <h1>VW <span>Head-Up Display</span></h1>
+    </div>
+    <p>A self-built head-up display for a VW Sharan. It taps the car's <strong>native CAN bus</strong> —
+       not OBD-II — and shows revs, speed, fuel and gear on a crisp 128×64 OLED, with a driving page and
+       an idle page. Built on an Arduino and a handful of cheap parts.</p>
+    <div>
+      <span class="pill">native CAN</span><span class="pill">128×64 OLED</span>
+      <span class="pill">Arduino / AVR</span><span class="pill">open source</span>
+    </div>
+    <div class="actions">
+      <a class="btn" href="hud-simulator.html">Try the live simulator</a>
+      <a class="btn ghost" href="https://github.com/1e1/arduino-obd2-hud/releases/latest">Latest release</a>
+      <a class="btn ghost" href="https://github.com/1e1/arduino-obd2-hud">Source on GitHub</a>
+    </div>
+  </header>
+
+  <h2 class="section">See it running</h2>
+  <div class="gallery">
+    <figure>
+      <img src="img/lcd-driving.jpg" alt="driving page on the OLED" loading="lazy" />
+      <figcaption>Driving page — RPM, speed, fuel and gear.</figcaption>
+    </figure>
+    <figure>
+      <img src="img/lcd-idle.jpg" alt="idle page on the OLED" loading="lazy" />
+      <figcaption>Idle page — odometer, trip and averages.</figcaption>
+    </figure>
+    <figure>
+      <img src="img/lcd.jpg" alt="HUD prototype" loading="lazy" />
+      <figcaption>The prototype on the bench.</figcaption>
+    </figure>
+  </div>
+
+  <h2 class="section">Reading the screen</h2>
+  <p>The 128×64 OLED shows two pages. Every reading — RPM bar, fuel, consumption, speed, gear, trip —
+     lives in a fixed zone, so the eye always finds it in the same place.</p>
+  <div class="diagrams">
+    <figure>
+      <img src="img/zones-driving.svg" alt="driving page zone layout" loading="lazy" />
+      <figcaption>Driving page — RPM bar, fuel, consumption, speed and gear zones.</figcaption>
+    </figure>
+    <figure>
+      <img src="img/zones-idle.svg" alt="idle page zone layout" loading="lazy" />
+      <figcaption>Idle page — odometer, trip and averages zones.</figcaption>
+    </figure>
+  </div>
+
+  <h2 class="section">Build it yourself</h2>
+  <p>The firmware now compiles in CI for six boards across five architectures — from the classic
+     ATmega328 (Uno / Nano) up to the RP2040 and the RISC-V ESP32-C3. Most carry an MCP2515 on the shared
+     SPI bus (onboard on the CANBed); the ESP32-C3 instead drives CAN through its built-in TWAI controller.
+     The OLED rides the same SPI bus. The main assembly targets the CANBed RP2040, whose plans are below.</p>
+  <table class="boards">
+    <thead>
+      <tr><th>Board</th><th>MCU</th><th>Clock</th><th>ROM</th><th>RAM</th><th>CAN</th><th>Active</th><th>Deep sleep</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Arduino Nano (classic) / Uno</td>
+        <td>ATmega328P</td>
+        <td>16 MHz</td>
+        <td>32 KB</td>
+        <td>2 KB</td>
+        <td class="muted">external MCP2515</td>
+        <td>~0.3–0.55 W</td>
+        <td>~10–25 mA <span class="muted">@12 V *</span></td>
+      </tr>
+      <tr>
+        <td>Arduino Nano Every</td>
+        <td>ATmega4809</td>
+        <td>20 MHz</td>
+        <td>48 KB</td>
+        <td>6 KB</td>
+        <td class="muted">external MCP2515</td>
+        <td>~0.3–0.55 W</td>
+        <td class="muted">idle only †</td>
+      </tr>
+      <tr>
+        <td>Seeed XIAO SAMD21</td>
+        <td>SAMD21 <span class="muted">(Cortex-M0+)</span></td>
+        <td>48 MHz</td>
+        <td>256 KB</td>
+        <td>32 KB</td>
+        <td class="muted">external MCP2515</td>
+        <td>~0.3–0.5 W</td>
+        <td class="muted">idle only †</td>
+      </tr>
+      <tr>
+        <td>CANBed RP2040 <span class="muted">(main assembly)</span></td>
+        <td>RP2040</td>
+        <td>133 MHz</td>
+        <td>2 MB</td>
+        <td>264 KB</td>
+        <td class="muted">MCP2515 onboard</td>
+        <td>~0.3–0.5 W</td>
+        <td class="muted">idle only †</td>
+      </tr>
+      <tr>
+        <td>Seeed XIAO ESP32-C3</td>
+        <td>ESP32-C3 <span class="muted">(RISC-V)</span></td>
+        <td>160 MHz</td>
+        <td>4 MB</td>
+        <td>400 KB</td>
+        <td class="muted">native TWAI + transceiver</td>
+        <td>~0.4–0.7 W</td>
+        <td class="muted">idle only †</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Rough estimates from datasheet typicals (board + CAN controller/transceiver + OLED),
+     for a mostly-dark HUD page. <em>Active</em> shows power, not current: both builds land around half a watt
+     with the engine running — that comes from the alternator, so it is not what matters. The real concern is
+     <em>deep sleep</em> (MCU power-down + OLED off) draining the battery while parked, so it is given as current
+     on the 12 V line. Compare it to the ~30–50 mA the car already draws at rest and a ~45–70 Ah battery:
+     single-digit mA lets you park for months. <strong>* The classic build's ~10–25 mA is dominated by
+     the Nano/Uno USB-serial chip, its power LED and the MCP2515 module's LED</strong> — strip those and it
+     falls below ~1 mA. <strong>† Real MCU power-down ships only on the classic-AVR build today</strong>
+     (PowerManager uses <code>avr/sleep.h</code>); on the Nano Every, XIAO SAMD21, CANBed and ESP32-C3 the
+     power manager is still a portable no-op, so they keep running near their active draw with the screen
+     off — per-arch deep-sleep is a planned follow-up (the RP2040's dormant mode and the ESP32-C3's deep-sleep
+     make sub-10 mA reachable once it lands). Not yet measured in-car — treat as orders of magnitude.</p>
+
+  <p class="note">Want to park longer between drives? That standby figure is almost all board housekeeping,
+     not the firmware — so a few cheap mods claw most of it back:</p>
+  <ul class="mods">
+    <li><strong>Kill the always-on LEDs.</strong> Desolder the power LED on the Nano/Uno and the one on the
+        blue MCP2515 module. <span class="save">~3–10 mA each</span> — the single biggest win.</li>
+    <li><strong>Drop the USB-serial chip.</strong> Program once, then run a bare ATmega328 (or remove the
+        CH340 / ATmega16U2). <span class="save">~several mA</span> of standby bridge draw. The CANBed has none
+        of this to begin with.</li>
+    <li><strong>Actually sleep the parts.</strong> MCU in power-down and the OLED in display-off once the
+        ignition is gone, waking on Klemme&nbsp;15 / CAN activity — what the firmware's PowerManager and the
+        <em>éteint / veille</em> state machine are for (see the
+        <a href="https://github.com/1e1/arduino-obd2-hud/blob/master/doc/DESIGN.md">design notes</a>). Real
+        power-down works on the classic-AVR build today; the other architectures fall back to a no-op until
+        their per-arch sleep lands.</li>
+    <li><strong>Pick a low-Iq regulator.</strong> The AMS1117 LDO on a Nano both burns the 12→5 V drop as heat
+        and idles at milliamps; a low-quiescent buck converter avoids both. The CANBed's onboard 9–28 V buck
+        already does this.</li>
+  </ul>
+  <p class="note">Stack those on the classic-AVR build — the one that actually powers down today — and standby
+     drops from ~10–25 mA toward &lt;&nbsp;~1 mA, into "park it for months" territory. The other architectures
+     reach the same once their per-arch deep-sleep lands.</p>
+
+  <h2 class="section">Hardware</h2>
+  <p>Dimensioned drawings of the two boards in the main assembly, and how they wire together.
+     Click a plan to open it full size.</p>
+  <div class="plans">
+    <figure>
+      <a class="sheet" href="img/canbed-rp2040.svg">
+        <img src="img/canbed-rp2040.svg" alt="CANBed RP2040 dimensioned drawing" loading="lazy" />
+      </a>
+      <figcaption>CANBed RP2040 — board plan. RP2040 with MCP2515 + MCP2551 CAN onboard, 9–28 V input.</figcaption>
+    </figure>
+    <figure>
+      <a class="sheet" href="img/oled-ssd1309.svg">
+        <img src="img/oled-ssd1309.svg" alt="SSD1309 OLED dimensioned drawing" loading="lazy" />
+      </a>
+      <figcaption>SSD1309 2.42″ 128×64 OLED — module plan with outline, mounting holes and viewing area.</figcaption>
+    </figure>
+    <figure>
+      <a class="sheet" href="img/wiring.png">
+        <img src="img/wiring.png" alt="wiring diagram" loading="lazy" />
+      </a>
+      <figcaption>Wiring — OLED and MCP2515 sharing the SPI bus (classic Nano/Uno build).</figcaption>
+    </figure>
+  </div>
+
+  <footer>
+    Built with Arduino / arduino-cli. CAN signal map from
+    <a href="https://github.com/commaai/opendbc">opendbc</a> (vw_pq.dbc).
+    Reverse-engineering bench: companion project
+    <a href="https://1e1.github.io/discodb2/">discodb2</a>.
+  </footer>
+</div>
+
+<script>
+// Animated favicon: redraw a tiny HUD screen on a canvas and push it to the tab icon.
+// Mirrors the logo — a dark OLED with a sweeping RPM bar (reads at 16px on any tab colour).
+(function () {
+  var link = document.querySelector('link[rel="icon"]');
+  if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+
+  var S = 64, c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  var ctx = c.getContext('2d');
+  if (!ctx) return; // no canvas → keep the static SVG favicon
+
+  var ACCENT = '#39e0c8', SCREEN = '#0c0f13', EDGE = '#2a323d';
+  var PERIOD = 2600; // ms, matches the logo's RPM loop
+
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function draw(t) {
+    var p = (t % PERIOD) / PERIOD;
+    var rev = p < 0.5 ? p * 2 : (1 - p) * 2; // triangle 0..1..0
+
+    ctx.clearRect(0, 0, S, S);
+    // self-contained dark screen so it reads on light or dark tab bars
+    ctx.fillStyle = SCREEN; rr(4, 12, 56, 40, 9); ctx.fill();
+    ctx.strokeStyle = EDGE; ctx.lineWidth = 2; rr(4, 12, 56, 40, 9); ctx.stroke();
+    // RPM bar (top) — sweeps
+    ctx.fillStyle = ACCENT; rr(11, 19, Math.max(4, 42 * rev), 7, 2); ctx.fill();
+    // fuel bar (bottom) — near full, static
+    ctx.fillStyle = ACCENT; rr(11, 38, 30, 7, 2); ctx.fill();
+
+    link.type = 'image/png';
+    link.href = c.toDataURL('image/png');
+  }
+
+  var start = null;
+  function tick(now) {
+    if (start === null) start = now;
+    draw(now - start);
+    // ~9 fps, light on CPU; the rAF link self-pauses while the tab is hidden
+    setTimeout(function () { requestAnimationFrame(tick); }, 110);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

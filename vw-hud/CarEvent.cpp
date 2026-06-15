@@ -7,7 +7,7 @@
 // ==============================================
 
 
-const CarEvent::Sensor CarEvent::getSensor(void) const
+CarEvent::Sensor CarEvent::getSensor(void) const
 {
     return this->_sensor;
 }
@@ -38,85 +38,71 @@ void CarEvent::update(void)
 
     this->_update();
 
+    // Timeout is opt-in (HUDISPLAY_TIMEOUT_COUNTER > 0). When disabled (==0) the
+    // whole block compiles out — avoids the "comparison always false" on MAX==0.
+    #if HUDISPLAY_TIMEOUT_COUNTER > 0
     if (this->_sensor == CarEvent::SENSOR_NONE) {
-        ++this->_timeoutCounter;
-
-        if(this->_timeoutCounter < CarEvent::TIMEOUT_COUNTER_MAX) {
+        if (++this->_timeoutCounter < CarEvent::TIMEOUT_COUNTER_MAX) {
             return;
         }
-        
-        #if HUDISPLAY_TIMEOUT_COUNTER > 0
         this->_sensor = CarEvent::SENSOR_TIMEOUT;
-        #endif
     }
-
     this->_timeoutCounter = 0;
+    #endif
 }
 
 
-const uint8_t CarEvent::getTankCapacity(void) const
+uint8_t CarEvent::getTankCapacity(void) const
 {
     return TANK_CAPACITY_MAX; // TODO
 }
 
 
-const uint8_t CarEvent::getTankLoad(void) const
+uint8_t CarEvent::getTankLoad(void) const
 {
     return this->_readByte();
 }
 
 
-const unsigned long CarEvent::getOdometerValue(void) const
+unsigned long CarEvent::getOdometerValue(void) const
 {
     return this->_readLong();
 }
 
 
-const unsigned short CarEvent::getRpmValue(void) const
+unsigned short CarEvent::getRpmValue(void) const
 {
     return this->_readShort();
 }
 
 
-const uint8_t CarEvent::getTorqueLoad(void) const
+uint8_t CarEvent::getSpeedValue(void) const
 {
     return this->_readByte();
 }
 
 
-const uint8_t CarEvent::getSpeedValue(void) const
+uint8_t CarEvent::getGearPosition(void) const
 {
     return this->_readByte();
 }
 
 
-const uint8_t CarEvent::getFuelConsumptionValue(void) const
+uint8_t CarEvent::getHandbrakePosition(void) const
 {
     return this->_readByte();
 }
 
 
-const unsigned short CarEvent::getMafValue(void) const
+uint8_t CarEvent::getIgnition(void) const
+{
+    return this->_readByte();
+}
+
+
+unsigned short CarEvent::getConsumptionCounter(void) const
 {
     return this->_readShort();
-}
-
-
-const unsigned short CarEvent::getEngineFuelRateValue(void) const
-{
-    return this->_readShort();
-}
-
-
-const uint8_t CarEvent::getGearPosition(void) const
-{
-    return this->_readByte();
-}
-
-
-const uint8_t CarEvent::getHandbrakePosition(void) const
-{
-    return this->_readByte();
 }
 
 

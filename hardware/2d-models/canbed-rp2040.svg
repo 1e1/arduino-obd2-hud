@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 297 210" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerUnits="userSpaceOnUse" markerWidth="4" markerHeight="4" refX="3.4" refY="2" orient="auto-start-reverse">
+      <path d="M0,0 L4,2 L0,4 z" fill="#444"/>
+    </marker>
+    <style>
+      .edge  { fill:#f7fbf2; stroke:#111; stroke-width:0.4; }
+      .pcb   { fill:#cfe6b8; stroke:#3a6b1e; stroke-width:0.3; }
+      .chip  { fill:#444; stroke:#111; stroke-width:0.2; }
+      .conn  { fill:#cfd8e6; stroke:#33425e; stroke-width:0.25; }
+      .grove { fill:#fff; stroke:#888; stroke-width:0.25; }
+      .pad   { fill:#f4d58a; stroke:#9a6a12; stroke-width:0.2; }
+      .holeL { fill:#fff; stroke:#d11; stroke-width:0.3; stroke-dasharray:1.2 0.9; }
+      .dim   { stroke:#444; stroke-width:0.18; marker-start:url(#arr); marker-end:url(#arr); }
+      .dimr  { stroke:#d11; stroke-width:0.18; marker-start:url(#arr); marker-end:url(#arr); }
+      .ext   { stroke:#888; stroke-width:0.12; }
+      .t     { font-size:2.5px; fill:#111; }
+      .tc    { font-size:1.8px; fill:#fff; text-anchor:middle; }
+      .tk    { font-size:1.8px; fill:#111; text-anchor:middle; }
+      .td    { font-size:2.5px; fill:#222; text-anchor:middle; }
+      .tr    { font-size:2.4px; fill:#d11; text-anchor:middle; }
+      .lbl   { font-size:3px; fill:#111; font-weight:bold; }
+      .small { font-size:2.1px; fill:#444; }
+      .title { font-size:5px; fill:#111; font-weight:bold; }
+    </style>
+  </defs>
+
+  <rect x="4" y="4" width="289" height="202" fill="none" stroke="#111" stroke-width="0.4"/>
+  <text x="10" y="14" class="title">PLAN — CANBed RP2040 (Longan 1030018, V1.1)</text>
+  <text x="10" y="20" class="small">Orthographic views · units = mm · scale 1:1 on A4 · outline + edge layout confirmed (ruler photo) · MCP2515 + MCP2551 onboard</text>
+
+  <!-- ===================== TOP VIEW (plan) ===================== -->
+  <text x="56" y="28" class="lbl" text-anchor="middle">VUE DE DESSUS / TOP (component side)</text>
+  <!-- board outline 56 x 41 : x 28..84, y 38..79 -->
+  <rect x="28" y="38" width="56" height="41" class="edge"/>
+
+  <!-- TOP edge: reset, I2C(4p), UART(4p), 120R x2 -->
+  <rect x="33" y="38.5" width="2.5" height="1.6" class="grove"/><text x="34" y="37.2" class="tk">RST</text>
+  <rect x="40" y="38.5" width="8" height="2" class="grove"/><text x="44" y="42.6" class="tk">I²C</text>
+  <rect x="52" y="38.5" width="8" height="2" class="grove"/><text x="56" y="42.6" class="tk">UART</text>
+  <rect x="71" y="38.5" width="6" height="2" class="grove"/><text x="74" y="37.2" class="tk">120Ω×2</text>
+
+  <!-- LEFT edge: GPIO 2x9 header -->
+  <rect x="29.5" y="47" width="3" height="22" class="conn"/>
+  <text x="31" y="58" class="tk" transform="rotate(-90 31 58)">GPIO 2×9</text>
+
+  <!-- chips (centre, indicative) -->
+  <rect x="42" y="44" width="8" height="4" class="chip"/><text x="46" y="46.8" class="tc">MCP2515</text>
+  <rect x="40" y="54" width="8" height="8" class="chip"/><text x="44" y="58.5" class="tc">RP2040</text>
+  <rect x="51" y="52" width="6" height="3.5" class="chip"/><text x="54" y="54.5" class="tc">MCP2551</text>
+  <rect x="55" y="62" width="5" height="3.5" class="chip"/><text x="57.5" y="64.5" class="tc">reg</text>
+
+  <!-- RIGHT edge: CAN — screw terminal pads + DB9 -->
+  <rect x="68" y="44" width="16" height="31" fill="#eef3f8" stroke="#33425e" stroke-width="0.25"/>
+  <text x="76" y="47" class="tk">CAN / DB9 + term</text>
+  <circle cx="80" cy="52" r="1.6" class="pad"/><text x="74.5" y="52.6" class="tk" text-anchor="end">CANL</text>
+  <circle cx="80" cy="58" r="1.6" class="pad"/><text x="74.5" y="58.6" class="tk" text-anchor="end">CANH</text>
+  <circle cx="80" cy="64" r="1.6" class="pad"/><text x="74.5" y="64.6" class="tk" text-anchor="end">GND</text>
+  <circle cx="80" cy="70" r="1.6" class="pad"/><text x="74.5" y="70.6" class="tk" text-anchor="end">VIN</text>
+  <text x="76" y="74" class="tk">VIN 9–28 V</text>
+
+  <!-- BOTTOM edge: micro USB (left-of-centre) + SPI header + SWD -->
+  <rect x="34" y="76" width="8" height="3.5" class="conn"/><text x="38" y="83.5" class="tk">µUSB</text>
+  <rect x="47" y="77" width="9" height="2" class="grove"/><text x="51.5" y="83.5" class="tk">SPI hdr</text>
+  <rect x="58" y="77" width="8" height="2" class="grove"/><text x="62" y="83.5" class="tk">SWD/dbg</text>
+
+  <!-- mounting holes: 2 small LEFT corners, 2 larger RIGHT (positions estimated) -->
+  <circle cx="30.5" cy="41" r="1.4" class="holeL"/>
+  <circle cx="30.5" cy="76" r="1.4" class="holeL"/>
+  <circle cx="65" cy="44.5" r="1.9" class="holeL"/>
+  <circle cx="65" cy="73" r="1.9" class="holeL"/>
+
+  <!-- overall width 56 (top) -->
+  <line class="ext" x1="28" y1="38" x2="28" y2="31"/>
+  <line class="ext" x1="84" y1="38" x2="84" y2="31"/>
+  <line class="dim" x1="28" y1="32.5" x2="84" y2="32.5"/>
+  <text x="56" y="31.8" class="td">56.0</text>
+  <!-- overall height 41 (left) -->
+  <line class="ext" x1="28" y1="38" x2="20" y2="38"/>
+  <line class="ext" x1="28" y1="79" x2="20" y2="79"/>
+  <line class="dim" x1="21.5" y1="38" x2="21.5" y2="79"/>
+  <text x="18.5" y="58.5" class="td" transform="rotate(-90 18.5 58.5)">41.0</text>
+
+  <text x="56" y="92" class="tr" text-anchor="middle">edge layout CONFIRMED (photo) · chip/connector exact offsets INDICATIVE</text>
+  <text x="56" y="95.5" class="tr" text-anchor="middle">○ 4 holes (2 small left · 2 larger right, ~M3) — Ø ⟨?⟩ · positions ⟨?⟩ (measure)</text>
+  <text x="56" y="99" class="small" text-anchor="middle">MCP2515 CS = GP9 (do NOT reuse for OLED) · I²C Wire1 SDA6/SCL7 · OLED → SPI hdr (SCK/SI/IO8)</text>
+
+  <!-- ===================== FRONT VIEW (face, from µUSB edge) ===================== -->
+  <text x="56" y="116" class="lbl" text-anchor="middle">VUE DE FACE / FRONT (PCB 1.0 confirmed · heights ⟨?⟩)</text>
+  <!-- PCB strip 56 wide, 1.0 thick, baseline y=150 -->
+  <rect x="28" y="149" width="56" height="1" class="pcb"/>
+  <!-- DB9/terminal rising at right -->
+  <rect x="74" y="137" width="9" height="12" class="conn"/><text x="78.5" y="144" class="tk">DB9</text>
+  <rect x="66" y="140" width="6" height="9" class="conn"/><text x="69" y="145" class="tk">term</text>
+  <!-- µUSB low at left -->
+  <rect x="34" y="146" width="7" height="3" class="conn"/><text x="37.5" y="148.2" class="tc">USB</text>
+  <!-- chips low -->
+  <rect x="44" y="146.5" width="8" height="2.5" class="chip"/>
+  <!-- width 56 -->
+  <line class="ext" x1="28" y1="150" x2="28" y2="156"/>
+  <line class="ext" x1="84" y1="150" x2="84" y2="156"/>
+  <line class="dim" x1="28" y1="154.5" x2="84" y2="154.5"/>
+  <text x="56" y="158.5" class="td">56.0</text>
+  <!-- PCB thickness 1.0 confirmed -->
+  <line class="dim" x1="22" y1="149" x2="22" y2="150"/>
+  <text x="20" y="150" class="td" text-anchor="end">1.0</text>
+  <!-- heights to measure -->
+  <line class="dimr" x1="89" y1="137" x2="89" y2="149"/>
+  <text x="91" y="143" class="tr" text-anchor="start">DB9 h ⟨?⟩ (~12.5)</text>
+
+  <!-- ===================== SIDE VIEW (côté, from DB9 edge) ===================== -->
+  <text x="150" y="116" class="lbl" text-anchor="middle">VUE DE CÔTÉ / SIDE (PCB 1.0 · heights ⟨?⟩)</text>
+  <!-- PCB strip 41 wide (Y), 1.0 thick : x 130..171 -->
+  <rect x="130" y="149" width="41" height="1" class="pcb"/>
+  <!-- DB9 profile rising -->
+  <rect x="138" y="137" width="16" height="12" class="conn"/><text x="146" y="144" class="tk">DB9 profile</text>
+  <!-- width 41 -->
+  <line class="ext" x1="130" y1="150" x2="130" y2="156"/>
+  <line class="ext" x1="171" y1="150" x2="171" y2="156"/>
+  <line class="dim" x1="130" y1="154.5" x2="171" y2="154.5"/>
+  <text x="150.5" y="158.5" class="td">41.0</text>
+  <line class="dim" x1="124" y1="149" x2="124" y2="150"/>
+  <text x="122" y="150" class="td" text-anchor="end">1.0</text>
+  <line class="dimr" x1="177" y1="137" x2="177" y2="150"/>
+  <text x="179" y="143" class="tr" text-anchor="start">total h ⟨?⟩</text>
+
+  <!-- ===================== LEGEND ===================== -->
+  <g transform="translate(200,116)">
+    <text x="0" y="0" class="lbl">LÉGENDE / LEGEND</text>
+    <rect x="0" y="3" width="8" height="4" class="edge"/>
+    <text x="10" y="6.2" class="t">confirmed outline 56 × 41 · PCB 1.0</text>
+    <rect x="0" y="9" width="8" height="4" class="conn"/>
+    <text x="10" y="12.2" class="t">connector (edge confirmed, offset indic.)</text>
+    <rect x="0" y="15" width="8" height="4" class="chip"/>
+    <text x="10" y="18.2" class="t">IC (indicative position)</text>
+    <circle cx="4" cy="23" r="1.6" class="holeL"/>
+    <text x="10" y="24.2" class="t">mounting hole — Ø/pos ⟨?⟩ (measure)</text>
+  </g>
+
+  <!-- ===================== TITLE BLOCK ===================== -->
+  <g transform="translate(200,150)">
+    <rect x="0" y="0" width="89" height="52" fill="none" stroke="#111" stroke-width="0.4"/>
+    <line x1="0" y1="10" x2="89" y2="10" stroke="#111" stroke-width="0.3"/>
+    <text x="3" y="7" class="lbl">VW HUD — Main Assembly</text>
+    <text x="3" y="16" class="t">Component: CANBed RP2040 (Longan 1030018)</text>
+    <text x="3" y="21" class="t">RP2040 · MCP2515 + MCP2551 · 16 MHz xtal</text>
+    <text x="3" y="26" class="t">Outline 56 × 41 · PCB 1.0 mm (confirmed)</text>
+    <text x="3" y="31" class="t">9–28 V in → 3.3 V/1 A · CS = GP9</text>
+    <text x="3" y="36" class="tr">⟨?⟩ to measure: connector heights, holes</text>
+    <text x="3" y="42" class="small">Source: Longan 1030018 · Seeed 102991596 · ruler photo (thepihut)</text>
+    <text x="3" y="46" class="small">File: hardware/2d-models/canbed-rp2040.svg</text>
+    <text x="3" y="50" class="small">Units mm · Scale 1:1 (A4) · 1st-angle layout</text>
+  </g>
+</svg>

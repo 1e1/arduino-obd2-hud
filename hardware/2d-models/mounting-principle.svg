@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 297 210" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerUnits="userSpaceOnUse" markerWidth="5" markerHeight="5" refX="4.2" refY="2.5" orient="auto">
+      <path d="M0,0 L5,2.5 L0,5 z" fill="#333"/>
+    </marker>
+    <marker id="aro" markerUnits="userSpaceOnUse" markerWidth="5" markerHeight="5" refX="4.2" refY="2.5" orient="auto">
+      <path d="M0,0 L5,2.5 L0,5 z" fill="#e07b00"/>
+    </marker>
+    <style>
+      .glassw { stroke:#1c4fa0; stroke-width:1.4; fill:none; }
+      .dash   { fill:#dadada; stroke:#888; stroke-width:0.4; }
+      .hud    { fill:#cfe0f5; stroke:#13315e; stroke-width:0.6; }
+      .face   { stroke:#13315e; stroke-width:1.4; fill:none; }
+      .hood   { stroke:#222; stroke-width:1.0; fill:none; }
+      .hook   { fill:none; stroke:#a33; stroke-width:1.0; }
+      .foot   { fill:#f3c9a0; stroke:#9a5a18; stroke-width:0.5; }
+      .sight  { stroke:#444; stroke-width:0.3; stroke-dasharray:2 1.4; fill:none; }
+      .refl   { stroke:#e07b00; stroke-width:0.8; fill:none; }
+      .reflx  { stroke:#e07b00; stroke-width:0.6; stroke-dasharray:2 1.4; fill:none; }
+      .lead   { stroke:#777; stroke-width:0.2; fill:none; }
+      .t      { font-size:2.7px; fill:#111; }
+      .ts     { font-size:2.3px; fill:#333; }
+      .to     { font-size:2.4px; fill:#b35e00; }
+      .lbl    { font-size:3.2px; fill:#111; font-weight:bold; }
+      .title  { font-size:5px; fill:#111; font-weight:bold; }
+    </style>
+  </defs>
+
+  <rect x="4" y="4" width="289" height="202" fill="none" stroke="#111" stroke-width="0.4"/>
+  <text x="10" y="14" class="title">CONSIGNE — Fixation du HUD (vue de côté) / Mounting principle</text>
+  <text x="10" y="20" class="ts">Crochet sur casquette du combiné + pied TPU · peu intrusif, stable au freinage/bosses · schéma de principe (non à l'échelle) · avant véhicule = gauche</text>
+
+  <!-- ===== windshield ===== -->
+  <line class="glassw" x1="112" y1="150" x2="56" y2="50"/>
+  <text x="70" y="58" class="t" fill="#1c4fa0">pare-brise / windshield</text>
+
+  <!-- ===== dashboard + instrument cowl ===== -->
+  <path class="dash" d="M95,178 L95,152 L112,150 L150,136 L160,133 L182,140 L218,156 L218,178 Z"/>
+  <text x="120" y="170" class="ts">tableau de bord / dashboard</text>
+  <!-- cowl lip callout -->
+  <circle cx="160" cy="133" r="1.1" fill="#a33"/>
+  <line class="lead" x1="160" y1="133" x2="120" y2="120"/>
+  <text x="70" y="119" class="t" fill="#a33">lèvre casquette combiné / cluster-cowl lip</text>
+  <text x="70" y="123" class="ts">= point d'accroche rigide (reprend le freinage)</text>
+
+  <!-- ===== HUD enclosure (tilted) ===== -->
+  <!-- body polygon: glass face T(150,108)-B(166,140), back T'(159,111)-B'(175,143) -->
+  <polygon class="hud" points="150,108 166,140 175,143 159,111"/>
+  <!-- glass face (toward eye, up-right) -->
+  <line class="face" x1="150" y1="108" x2="166" y2="140"/>
+  <text x="178" y="120" class="t" fill="#13315e">HUD (dalle OLED inclinée)</text>
+  <line class="lead" x1="176" y1="121" x2="160" y2="124"/>
+  <text x="178" y="124" class="ts">face vitrée vers le conducteur</text>
+  <text x="178" y="128" class="ts">bezel mat tight to V.A 57×29.5</text>
+
+  <!-- hood / visor over top of panel -->
+  <path class="hood" d="M150,108 L138,103"/>
+  <text x="108" y="100" class="t">casquette / hood (anti-soleil + anti-reflet)</text>
+  <line class="lead" x1="138" y1="103" x2="135" y2="101"/>
+
+  <!-- hook over cowl lip -->
+  <path class="hook" d="M166,140 C 162,138 156,138 158,133 C 159,130 162,131 162,133"/>
+  <line class="lead" x1="162" y1="137" x2="205" y2="150"/>
+  <text x="206" y="151" class="t" fill="#a33">crochet sur la lèvre / hook</text>
+  <text x="206" y="155" class="ts">reprend l'effort de freinage (avant-arrière)</text>
+
+  <!-- TPU foot -->
+  <path class="foot" d="M175,143 l6,1 l-1,4 l-6,-1 z"/>
+  <line class="lead" x1="180" y1="147" x2="205" y2="160"/>
+  <text x="206" y="161" class="t">pied TPU antidérapant / anti-slip foot</text>
+  <text x="206" y="165" class="ts">reprend le vertical + amortit bosses/vibrations</text>
+
+  <!-- tilt angle -->
+  <line x1="166" y1="140" x2="166" y2="120" class="sight"/>
+  <path d="M166,124 A 16 16 0 0 0 161,116" fill="none" stroke="#111" stroke-width="0.3"/>
+  <text x="168" y="120" class="t">θ</text>
+  <text x="168" y="116" class="ts">inclinaison à régler</text>
+
+  <!-- cable -->
+  <path d="M170,142 C 172,158 176,164 182,172" fill="none" stroke="#111" stroke-width="0.6"/>
+  <text x="184" y="174" class="t">câble fin → OBD (sous le dash)</text>
+
+  <!-- ===== eye + sightlines ===== -->
+  <circle cx="246" cy="98" r="3" fill="#fff" stroke="#111" stroke-width="0.5"/>
+  <circle cx="246" cy="98" r="1.1" fill="#111"/>
+  <text x="240" y="91" class="t" text-anchor="middle">œil conducteur</text>
+  <text x="240" y="94.5" class="ts" text-anchor="middle">driver eye line</text>
+  <!-- glance down to HUD face -->
+  <line class="sight" x1="244" y1="99" x2="160" y2="124"/>
+  <text x="205" y="113" class="ts">regard vers le HUD</text>
+  <!-- sight to road -->
+  <line class="sight" x1="244" y1="100" x2="120" y2="165"/>
+  <text x="150" y="148" class="ts">route</text>
+
+  <!-- ===== reflection illustration ===== -->
+  <!-- ray from panel up to windshield -->
+  <path class="refl" marker-end="url(#aro)" d="M153,113 L86,86"/>
+  <!-- deflected reflection AWAY from eye (good) -->
+  <path class="refl" marker-end="url(#aro)" d="M86,86 L66,62"/>
+  <text x="40" y="74" class="to">reflet dévié hors du regard ✓</text>
+  <text x="40" y="78" class="ts">(grâce à l'inclinaison + casquette)</text>
+  <!-- ghost toward eye, avoided -->
+  <path class="reflx" d="M86,86 L244,96"/>
+  <text x="150" y="84" class="to">✗ image fantôme évitée</text>
+
+  <!-- ===== notes box ===== -->
+  <g transform="translate(14,158)">
+    <rect x="0" y="0" width="150" height="44" fill="#f3f7ff" stroke="#13315e" stroke-width="0.3"/>
+    <text x="4" y="8" class="lbl">PRINCIPES / RULES</text>
+    <text x="4" y="15" class="t">• Crochet = effort de <tspan font-weight="bold">freinage</tspan> · pied TPU = <tspan font-weight="bold">vertical + vibrations</tspan>.</text>
+    <text x="4" y="21" class="t">• <tspan font-weight="bold">Sans adhésif ni perçage</tspan> (réversible) ; pas de ventouse pare-brise.</text>
+    <text x="4" y="27" class="t">• <tspan font-weight="bold">Masse en bas</tspan> (CANBed) → centre de gravité bas, moins de balancier.</text>
+    <text x="4" y="33" class="t">• <tspan font-weight="bold">2 parties</tspan> : berceau qui reste + HUD qui se déclipse.</text>
+    <text x="4" y="39" class="t">• Inclinaison + casquette + bezel mat = anti-reflet ; vents pour la chaleur.</text>
+  </g>
+
+  <!-- title block -->
+  <g transform="translate(222,168)">
+    <rect x="0" y="0" width="67" height="34" fill="none" stroke="#111" stroke-width="0.4"/>
+    <text x="3" y="7" class="lbl">VW HUD — Mounting consigne</text>
+    <text x="3" y="14" class="ts">Cowl-lip hook + TPU foot, no adhesive</text>
+    <text x="3" y="19" class="ts">Tilt + hood + matte bezel = anti-reflection</text>
+    <text x="3" y="24" class="ts">File: hardware/2d-models/mounting-principle.svg</text>
+    <text x="3" y="29" class="ts">Side elevation — not to scale</text>
+  </g>
+</svg>

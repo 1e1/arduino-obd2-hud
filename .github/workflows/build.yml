@@ -1,0 +1,63 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: native unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile & run unit tests
+        run: |
+          c++ -std=c++11 -Wall -Itest test/test_can.cpp -o test_can
+          ./test_can
+          c++ -std=c++11 -Wall -Itest test/test_hud.cpp -o test_hud
+          ./test_hud
+      - name: Check _hudmath.h is normalised (no-AI codegen)
+        run: python3 tools/gen_hudmath.py --check
+
+  firmware:
+    name: compile (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Verified to compile clean locally with the board-conditional firmware.
+          # flash/RAM figures are the local arduino-cli reports at time of writing.
+          - { fqbn: "arduino:avr:uno",          name: "uno",         core: "arduino:avr" }      # BASELINE 23460 B / 1420 B (byte-identical)
+          - { fqbn: "arduino:avr:nano",         name: "nano",        core: "arduino:avr" }      # 23460 B / 1420 B
+          - { fqbn: "arduino:megaavr:nona4809", name: "nano-every",  core: "arduino:megaavr" }  # 28320 B / 1485 B (PowerManager = portable fallback, no real deep-sleep yet)
+          - { fqbn: "Seeeduino:samd:seeed_XIAO_m0", name: "samd21",  core: "Seeeduino:samd", url: "https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json" }  # real Seeed XIAO SAMD21 (Cortex-M0+): 57404 B; HUD_VIN + full buffer.
+          - { fqbn: "rp2040:rp2040:rpipico",    name: "rp2040",      core: "rp2040:rp2040", url: "https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json" }  # CANBed RP2040 arch: 76780 B / 11356 B
+          # XIAO ESP32-C3: NO MCP2515 -> native TWAI transport (CarEventTwaiVwPq, driver/twai.h).
+          - { fqbn: "esp32:esp32:XIAO_ESP32C3", name: "esp32c3",     core: "esp32:esp32", url: "https://espressif.github.io/arduino-esp32/package_esp32_index.json" }  # native TWAI backend: 324518 B / 15844 B
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install core & libraries
+        run: |
+          if [ -n "${{ matrix.url }}" ]; then
+            arduino-cli config init --overwrite
+            arduino-cli config add board_manager.additional_urls ${{ matrix.url }}
+          fi
+          arduino-cli core update-index
+          arduino-cli core install ${{ matrix.core }}
+          arduino-cli lib install U8g2 mcp_can
+      - name: Compile
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} --output-dir build/${{ matrix.name }} vw-hud
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.name }}
+          # AVR emits .hex; SAMD/RP2040/ESP32 emit .bin/.uf2/.elf — capture them all.
+          path: |
+            build/${{ matrix.name }}/*.hex
+            build/${{ matrix.name }}/*.bin
+            build/${{ matrix.name }}/*.uf2
+            build/${{ matrix.name }}/*.elf
+          if-no-files-found: warn

@@ -160,7 +160,7 @@
         <td>264 KB</td>
         <td class="muted">MCP2515 onboard</td>
         <td>~0.3–0.5 W</td>
-        <td class="muted">idle only †</td>
+        <td class="muted">INT wake ‡</td>
       </tr>
       <tr>
         <td>Seeed XIAO ESP32-C3</td>
@@ -182,10 +182,13 @@
      single-digit mA lets you park for months. <strong>* The classic build's ~10–25 mA is dominated by
      the Nano/Uno USB-serial chip, its power LED and the MCP2515 module's LED</strong> — strip those and it
      falls below ~1 mA. <strong>† Real MCU power-down ships only on the classic-AVR build today</strong>
-     (PowerManager uses <code>avr/sleep.h</code>); on the Nano Every, XIAO SAMD21, CANBed and ESP32-C3 the
-     power manager is still a portable no-op, so they keep running near their active draw with the screen
-     off — per-arch deep-sleep is a planned follow-up (the RP2040's dormant mode and the ESP32-C3's deep-sleep
-     make sub-10 mA reachable once it lands). Not yet measured in-car — treat as orders of magnitude.</p>
+     (PowerManager uses <code>avr/sleep.h</code>); on the Nano Every, XIAO SAMD21 and ESP32-C3 the
+     power manager is still a portable no-op, so they keep running near their active draw with the screen off.
+     <strong>‡ The CANBed RP2040 now sleeps interrupt-driven</strong> — the cores clock-gate (<code>__wfi</code>)
+     and wake on the onboard MCP2515 INT (bus activity), and the in-trip naps already idle on <code>__wfe</code>,
+     so it no longer free-runs; the deeper XOSC-dormant mode that reaches single-digit mA is the next step
+     (pending bench validation). The ESP32-C3's deep-sleep is still a planned follow-up. Not yet measured
+     in-car — treat as orders of magnitude.</p>
 
   <p class="note">Want to park longer between drives? That standby figure is almost all board housekeeping,
      not the firmware — so a few cheap mods claw most of it back:</p>
@@ -199,8 +202,9 @@
         ignition is gone, waking on Klemme&nbsp;15 / CAN activity — what the firmware's PowerManager and the
         <em>éteint / veille</em> state machine are for (see the
         <a href="https://github.com/1e1/arduino-obd2-hud/blob/master/doc/DESIGN.md">design notes</a>). Real
-        power-down works on the classic-AVR build today; the other architectures fall back to a no-op until
-        their per-arch sleep lands.</li>
+        power-down works on the classic-AVR build today; the CANBed already sleeps interrupt-driven (waking on
+        the MCP2515 INT) with full XOSC-dormant to come, while the remaining architectures fall back to a no-op
+        until their per-arch sleep lands.</li>
     <li><strong>Pick a low-Iq regulator.</strong> The AMS1117 LDO on a Nano both burns the 12→5 V drop as heat
         and idles at milliamps; a low-quiescent buck converter avoids both. The CANBed's onboard 9–28 V buck
         already does this.</li>

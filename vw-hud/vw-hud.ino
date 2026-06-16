@@ -72,6 +72,19 @@ void setup() {
 
   #ifdef VH_INT_CANBUS
   pinMode(VH_INT_CANBUS, INPUT);   // MCP2515 INT (deep-sleep wake); absent on the TWAI board
+  // [H5] L'/INT du MCP2515 est suppose push-pull -> INPUT suffit. Si le reveil sur
+  // INT s'avere instable au banc (faux reveils / reveils manques, recette R3),
+  // activer le pull-up a la place de la ligne ci-dessus :
+  //pinMode(VH_INT_CANBUS, INPUT_PULLUP);
+  #endif
+
+  #if defined(ARDUINO_ARCH_RP2040) && defined(VH_SPI_CS_CANBUS)
+  // CANBed RP2040 wires the onboard MCP2515 to SPI0 GP2/3/4, NOT the Philhower
+  // default SPI0 pins (18/19/16). Re-route the bus BEFORE any SPI.begin()
+  // (canBoard.begin below + the U8g2 HW-SPI display share this one bus).
+  SPI.setSCK(VH_SCK);
+  SPI.setTX(VH_SPI_COPI);
+  SPI.setRX(VH_SPI_CIPO);
   #endif
 
 

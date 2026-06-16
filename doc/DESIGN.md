@@ -26,12 +26,12 @@ A self-built Head-Up Display for a VW Sharan (Sound, TSI 1.5, mid-2018, manual g
 | Raspberry Pi Pico (RP2040) | 2×Cortex-M0+ @133 MHz | 2 MB | 264 KB | required |
 | CANBed RP2040 (Longan) | 2×Cortex-M0+ @133 MHz | 2 MB | 264 KB | no — MCP2515 onboard |
 
-- **Builds today: classic ATmega328 only** (Uno / Nano). The CI matrix compiles `arduino:avr:uno` + `arduino:avr:nano`; the rest of the table is the design target, not yet building. The Nano Every (megaavr) and every other board need a `PowerManager` port — its sleep/wake uses classic-AVR watchdog/sleep registers (`WDIE`, `WDP0..3`, `avr/wdt.h`, `avr/sleep.h`) absent on the ATmega4809. The ESP32-C3 additionally needs a `CarEventTwai` backend.
+- **Builds today: all six boards compile** across five architectures (classic-AVR, megaavr, SAMD, RP2040, ESP32). `PowerManager` is dual-pathed: classic-AVR keeps the real deep-sleep baseline (watchdog/sleep registers `WDIE`, `WDP0..3`, `avr/wdt.h`, `avr/sleep.h`), every other arch takes a portable path (`VH_DEEP_SLEEP==0`). On that portable path the **RP2040 is no longer a no-op**: `shutdown()` sleeps in `__wfi` and wakes on the MCP2515 INT (bus activity), `standby()` idles in `__wfe`; only the deepest XOSC-dormant (sub-mA) is still pending bench validation. The megaavr / SAMD / ESP32-C3 portable paths are still timed-`delay()` no-ops awaiting their per-arch sleep. The ESP32-C3 additionally uses the `CarEventTwai` backend (no MCP2515).
 - The 328P (2 KB RAM) dimensions everything. Two tiers:
   - **constrained** (328P / Nano Every): OLED page mode (`VH_DISPLAY_FULLBUFFER=0`), no full buffer (a full buffer is 1 KB = 50% of 328P RAM).
   - **comfortable** (SAMD21 / RP2040 / ESP32-C3): full buffer + partial `updateDisplayArea`.
-- `_wiring.h` currently holds only the NANO and XIAO pinout blocks. SAMD21 / ESP32-C3 / RP2040 need their own blocks later.
-- CANBed RP2040 is the most turnkey board: onboard MCP2515 on internal SPI, the existing `CarEventCan` (MCP_CAN lib) works as-is.
+- `_wiring.h` now holds a per-architecture pinout block for each board (classic-AVR / megaavr / SAMD / RP2040 / ESP32-C3), keyed on the `ARDUINO_ARCH_*` macros. Pins on the non-AVR blocks are bench-guess except the CANBed RP2040 (confirmed against the Longan + Zephyr board pinout — see below).
+- CANBed RP2040 is the most turnkey board: onboard MCP2515 + MCP2551, the existing `CarEventCan` (MCP_CAN lib) works as-is. Its onboard MCP is wired to **SPI0 GP2/3/4, CS GP9, INT GP11, 16 MHz crystal** (confirmed) — NOT the Philhower default SPI0 pins, so the firmware re-routes the bus with `SPI.setSCK/setTX/setRX` in `setup()`. Deep-sleep wakes on the GP11 INT. Validation steps for the whole port are in [RECETTE-CANBED-RP2040.md](./RECETTE-CANBED-RP2040.md).
 - ESP32-C3 uses native CAN (TWAI) and needs a new backend `CarEventTwai` + an external transceiver. Native controller opens future options: live telemetry to a discodb2 backend, OTA, BLE config.
 
 ### MCP2515 crystal frequency
@@ -39,7 +39,7 @@ A self-built Head-Up Display for a VW Sharan (Sound, TSI 1.5, mid-2018, manual g
 - The MCP2515 crystal frequency MUST be declared in code — there is no auto-detection. A mismatch with the physical crystal causes silent, total comms failure.
 - It is the 3rd argument of `mcp2515.begin(MCP_STD, CAN_500KBPS, MCP_8MHZ)`.
 - It varies per module: cheap blue modules are often 8 MHz, sometimes 16 MHz; the CANBed RP2040 onboard controller is 16 MHz.
-- Today it is hardcoded in `vw-hud.ino`. The agreed target is to make it a config constant (e.g. `VH_CAN_CRYSTAL` + `VH_CAN_BITRATE`) in `_wiring.h` / `_can.h`, not in the `.ino`.
+- It is now a config constant per board: `VH_CAN_CRYSTAL` (+ `VH_CAN_BITRATE`) in `_wiring.h`, passed to `mcp2515.begin()` from the `.ino` (no longer hardcoded inline). CANBed RP2040 = `MCP_16MHZ`.
 - Bitrate must match the tapped bus: PQ powertrain = 500 kbps; comfort/Kombi possibly 100 kbps — to verify on bench per the tapped harness.
 
 ## Architecture
@@ -49,7 +49,7 @@ Clean swappable abstractions, each with backends for bench testing and for the c
 - **CarEvent** — data source. Emits decoded sensor events. Backends: `CarEventStream` (test feed), `CarEventHardware` (test feed), `CarEventCan` (MCP2515), future `CarEventTwai` (ESP32-C3).
 - **Hudisplay** — renderer. Holds the display model and the sliding window. Backends: `Hudisplay128x64` (SSD1309 OLED), `HudisplayStream` (test sink).
 - **Workflow** — the state machine. `update()` walks `_sleep → _confirmContact → _boot → _run`, driving `CarEvent` mode and `Hudisplay` page. `_run` owns page selection via the RPM+handbrake criterion below (the old `_isStationary` heuristic in `Hudisplay::requestAnimationFrame` is gone). RPM-absence is detected by a staleness counter (`RPM_ABSENT_TICKS`).
-- **PowerManager** (`Energy`) — sleep / wake, CPU clock scaling, watchdog timing, wall-clock `realMillis()`. `_sleep` calls `Energy.shutdown()` (real PWR_DOWN, wakes on a FALLING INT0 = MCP2515 bus activity). Classic-AVR only today; sleep/wake is board-specific (AVR PWR_DOWN vs RP2040 dormant vs ESP32-C3 deep sleep) and belongs behind this layer.
+- **PowerManager** (`Energy`) — sleep / wake, CPU clock scaling, watchdog timing, wall-clock `realMillis()`. `_sleep` calls `Energy.shutdown()` (wakes on a FALLING INT = MCP2515 bus activity). Sleep/wake is board-specific and lives behind this layer: classic-AVR does real PWR_DOWN + WDT; RP2040 does `__wfi`/`__wfe` interrupt-driven sleep on the GP11 INT today, with XOSC-dormant (sub-mA) as a follow-up; ESP32-C3 deep-sleep and the megaavr/SAMD ports are still no-ops.
 
 ### Display-limit helpers
 
@@ -195,11 +195,12 @@ Only RPM is 1/1; everything else round-robins across frames to spread render loa
 - Bus bitrate per tapped harness (PQ powertrain 500 kbps; comfort/Kombi possibly 100 kbps).
 - Cluster messages (fuel `Tankinhalt`, odometer `Kilometerstand`) may be **absent** on a powertrain-only tap. The odometer is rated only ~40% likely to appear on CAN. boot needs a timeout (degraded mode) if they never arrive.
 - Whether `Handbremserinnerung_s_Lampe` reflects "handbrake engaged" (usable) or only a drive-off nag (unusable → fall back to RPM-only).
-- Whether the OBD 12V is cut at ignition-off or kept on a timer (drives the power assumption).
+- Whether the OBD 12V is cut at ignition-off or kept on a timer (drives the power assumption — and whether a CANBed XOSC-dormant hang would self-clear at the next key).
+- **CANBed RP2040 port** — its own structured acceptance plan (SPI re-route, INT polarity, crystal, sleep/wake) is tracked as hypotheses H1–H11 in [RECETTE-CANBED-RP2040.md](./RECETTE-CANBED-RP2040.md).
 
 ## Remaining work
 
 The CAN pivot is done: `CarEventCan` filters by arbitration ID and decodes by bit offset, `Klemme_15` (ignition) is decoded and drives all transitions, `Energy.shutdown()` is wired (real PWR_DOWN), `_boot` has a tick timeout into degraded mode, and the `// TODO REMOVE` RPM/handbrake hacks are replaced by the locked state machine. What remains:
 
 - **Bench verification** (discodb2, against this car): all CAN IDs / bit offsets / scales; deep-sleep wake on the MCP2515 INT0; the idle→driving filter reconfig (`setMode` + `switchOn`) for dropped frames; the tick thresholds (`CONFIRM` / `BOOT` / `RPM_ABSENT`).
-- **Board ports**: a `PowerManager` port for the Nano Every (megaavr) and the other boards; a `CarEventTwai` backend for the ESP32-C3.
+- **Board ports**: a `PowerManager` port for the Nano Every (megaavr) and SAMD21; the RP2040 XOSC-dormant depth (sub-mA); ESP32-C3 deep-sleep + its `CarEventTwai` backend.

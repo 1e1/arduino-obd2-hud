@@ -269,6 +269,18 @@ void PowerManager::_sleepUntilInterrupt(const byte mode)
 #else
 
 
+#if defined(ARDUINO_ARCH_RP2040) && VH_RP2040_DORMANT
+// Pico-SDK low-level clock/XOSC/GPIO control -- only pulled in when the true
+// XOSC-dormant path is enabled (VH_RP2040_DORMANT==1). Bench-validated path only.
+#include "hardware/clocks.h"
+#include "hardware/pll.h"
+#include "hardware/xosc.h"
+#include "hardware/gpio.h"
+#include "hardware/watchdog.h"
+#include "hardware/structs/clocks.h"
+#endif
+
+
 void PowerManager::begin(void)
 {
   // Nothing to gate off on the portable path. Real per-arch low-power init
@@ -282,25 +294,95 @@ void PowerManager::begin(void)
 
 void PowerManager::standby(const Wdt timer)
 {
+#if defined(ARDUINO_ARCH_RP2040)
+  // In-trip short nap (16/32 ms between frames). delay() on the Philhower core
+  // maps to the SDK sleep_ms() -> best_effort_wfe_or_timeout(): it arms a HW
+  // alarm and clock-gates the core with __wfe() until it fires -- so this is
+  // ALREADY low-power, not a busy-wait. millis() advances on the alarm timebase,
+  // so realMillis() stays correct (no untimed_ms accounting). Stopping the PLLs
+  // at this granularity isn't worth the wake latency -- that depth is reserved
+  // for shutdown() (inter-trip).
+  delay((unsigned long)timer);
+#else
   // Fallback "standby" = a plain busy/idle wait for the requested interval.
   // Keeps the frame/window wall-clock cadence correct (Workflow gates on
   // realMillis()) at the cost of NOT actually lowering power yet.
   // TODO(megaavr): sleep in STANDBY/PWR_DOWN with the RTC/PIT as wake source.
   // TODO(SAMD):    __WFI() in STANDBY with the RTC as the periodic wake.
-  // TODO(RP2040):  sleep_goto_sleep_for() / low-power sleep for `timer` ms.
   // TODO(ESP32):   light-sleep (esp_sleep_enable_timer_wakeup + light_sleep).
   delay((unsigned long)timer);
+#endif
 }
+
+
+#if defined(ARDUINO_ARCH_RP2040) && defined(VH_INT_CANBUS)
+// Empty ISR: its only job is to be an NVIC-enabled wake source so __wfi() returns.
+static void _ISR_rp2040_wakeup(void) {}
+
+#if VH_RP2040_DORMANT
+// Re-source clk_ref/clk_sys from the raw XOSC and stop the PLLs so the XOSC can
+// then be halted by xosc_dormant(). Mirrors pico-extras sleep_run_from_xosc()
+// (NOT bundled in arduino-pico). BENCH-UNVALIDATED -- recette R6 / [H10].
+static void _rp2040_run_from_xosc(void)
+{
+  clock_configure(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0,
+                  XOSC_HZ, XOSC_HZ);                    // clk_ref <- XOSC
+  clock_configure(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF,
+                  CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS,
+                  XOSC_HZ, XOSC_HZ);                    // clk_sys <- clk_ref
+  clock_stop(clk_usb);
+  clock_stop(clk_adc);
+  clock_configure(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS,
+                  XOSC_HZ, XOSC_HZ);                    // clk_peri <- clk_sys
+  pll_deinit(pll_sys);
+  pll_deinit(pll_usb);
+}
+#endif
+#endif
 
 
 void PowerManager::shutdown(void)
 {
+#if defined(ARDUINO_ARCH_RP2040) && defined(VH_INT_CANBUS)
+  // Inter-trip deep idle (ignition off). The MCP2515 is in MCP_SLEEP with
+  // wake-on-bus armed (CarEventCan::_switchOff + setSleepWakeup), so its /INT
+  // (active-low, GP11 on the CANBed) asserts when the car bus wakes.
+  //
+  // millis() resetting is irrelevant here: shutdown == end of trip, so a fresh
+  // wall-clock at the next trip is desirable (no untimed_ms accounting needed).
+  //
+  // Two outcomes of recette R6 / [H10], selected at compile time by
+  // VH_RP2040_DORMANT in _wiring.h:
+  #if VH_RP2040_DORMANT
+  // --- Outcome A (bench-validated, SWITCHED 12V only): true XOSC-dormant. ---
+  // Lowest power (sub-mA): re-source from XOSC, stop PLLs, arm the GP11 INT as a
+  // LEVEL-LOW dormant wake, then halt the XOSC. On wake we hard-REBOOT rather
+  // than restore clocks -- a clean bring-up (bootrom restores PLLs) and a fresh
+  // millis()=0 (== new trip, wanted). RISK: a wrong teardown hangs xosc_dormant()
+  // forever, recoverable ONLY by a power cut / RUN pin (watchdog is dead here).
+  _rp2040_run_from_xosc();
+  gpio_set_dormant_irq_enabled(VH_INT_CANBUS, GPIO_IRQ_LEVEL_LOW, true);
+  xosc_dormant();                       // halts here until GP11 goes low (bus woke us)
+  watchdog_reboot(0, 0, 0);             // clean restart; never returns
+  while (true) { __wfi(); }             // unreachable, satisfies no-return intent
+  #else
+  // --- Outcome B (default, safe on ANY supply): interrupt-driven __wfi. ---
+  // Arm a GPIO interrupt on the INT and clock-gate the core with __wfi(),
+  // re-checking the pin on every (SysTick/USB) wake so spurious IRQs just go
+  // back to sleep. Interrupt-driven (not polling) and CANNOT brick the chip.
+  attachInterrupt(digitalPinToInterrupt(VH_INT_CANBUS), _ISR_rp2040_wakeup, FALLING);
+  while (digitalRead(VH_INT_CANBUS) != LOW) {
+    __wfi();
+  }
+  detachInterrupt(digitalPinToInterrupt(VH_INT_CANBUS));
+  #endif
+#else
   // Fallback "deep sleep until bus activity" = no-op (the caller loop will just
   // keep polling the CAN board). The board does NOT actually power down yet.
   // TODO(megaavr): PWR_DOWN, wake on the INT pin (PORT interrupt).
   // TODO(SAMD):    deep STANDBY, wake on EXTINT from the MCP2515 INT pin.
-  // TODO(RP2040):  XOSC dormant, wake on the GPIO tied to MCP2515 INT.
   // TODO(ESP32):   esp_deep_sleep_start(); wake on GPIO (or TWAI once ported).
+#endif
 }
 
 

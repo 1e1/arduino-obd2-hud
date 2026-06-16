@@ -121,30 +121,47 @@
 
 // -----------------------------------------------------------------------------
 // RP2040 -- Raspberry Pi Pico / CANBed RP2040 (Earle Philhower core).
-// 2 MB / 264 KB -> "comfortable". CANBed has the MCP2515 ONBOARD on its own SPI
-// (CS commonly GP9, INT GP20, 16 MHz crystal); a bare Pico uses an external
-// module. PRIORITISED target (enclosure). External vs onboard differ only in
-// wiring -- the mcp_can SPI transport is identical.
+// 2 MB / 264 KB -> "comfortable". CANBed wires the MCP2515 ONBOARD to SPI0
+// (SCK GP2 / MOSI GP3 / MISO GP4), CS GP9, INT GP11, 16 MHz crystal -- confirmed
+// against the official Longan + Zephyr board pinout. A bare Pico uses an external
+// module; only the wiring differs, the mcp_can SPI transport is identical.
+// NOTE: the onboard MCP is NOT on the Philhower default SPI0 pins (18/19/16), so
+// the SPI bus must be re-routed with SPI.setSCK(2)/setTX(3)/setRX(4) before
+// SPI.begin() -- VH_SCK/COPI/CIPO below are currently consumed only by the
+// (commented-out) SW-SPI display path. PRIORITISED target (enclosure).
 // -----------------------------------------------------------------------------
 #if defined(ARDUINO_ARCH_RP2040) && !defined(VH_SPI_CS_CANBUS)
-#define VH_SCK                      18  // SPI0 SCK (Pico default)
-#define VH_SPI_COPI                 19  // MOSI
-#define VH_SPI_CIPO                 16  // MISO
+#define VH_SCK                      2   // CANBed onboard MCP2515 on SPI0 SCK (GP2)
+#define VH_SPI_COPI                 3   // MOSI (GP3)
+#define VH_SPI_CIPO                 4   // MISO (GP4)
 #define VH_I2C_SCL                  21
 #define VH_I2C_SDA                  20
 #define VH_SPI_CS_CANBUS            9   // CANBed RP2040 onboard MCP2515 CS (GP9)
 #define VH_SPI_CS_SCREEN            17
 #define VH_DC0_SCREEN               14  // DC
 #define VH_RESET_SCREEN             15
-#define VH_INT_CANBUS               8   // CANBed onboard MCP2515 INT (verify GP)
-#define VH_CAN_CRYSTAL              MCP_16MHZ  // CANBed onboard crystal = 16 MHz
+#define VH_INT_CANBUS               11  // CANBed onboard MCP2515 INT (GP11, confirmed) [H3]
+// [H6] Quartz du MCP2515 onboard = 16 MHz. Le marquage du composant est illisible
+// a l'oeil sur la carte ; valeur confirmee par le devicetree Zephyr canbed_rp2040
+// (`osc-freq = <16000000>`). Un quartz mal declare -> SILENCE TOTAL du CAN (aucune
+// trame), pas d'erreur explicite. Cf. recette R1.
+#define VH_CAN_CRYSTAL              MCP_16MHZ  // CANBed onboard crystal = 16 MHz (confirmed) [H6]
 
 #define VH_SERIAL_PORT              Serial
 #define VH_SERIAL_SPEED             115200
 #define VH_DISPLAY_FULLBUFFER       1
 // full frame buffer (ample RAM)
 #define VH_U8G2_BUFFER_MODE         _F_
-#define VH_DEEP_SLEEP               0     // TODO: RP2040 dormant/sleep (XOSC dormant, wake on GPIO)
+// VH_DEEP_SLEEP reste 0 = chemin PowerManager portable (pas de regs classic-AVR).
+// MAIS ce chemin n'est PLUS un no-op sur RP2040 : shutdown() dort en __wfi et se
+// reveille sur l'INT du MCP (GP11), standby() idle en __wfe. Seul le vrai dormant
+// XOSC (sub-mA) reste a faire (phase 2, recette R6 / TODO PowerManager.cpp [H10]).
+#define VH_DEEP_SLEEP               0
+// [H10] Selecteur shutdown() RP2040 (resultat de la recette R6) :
+//   0 = __wfi pilote par l'INT  -> SUR sur toute alim, ne peut pas figer (defaut).
+//   1 = vrai XOSC-dormant sub-mA -> N'ACTIVER qu'apres validation banc ET si le
+//       CANBed est sur 12V COMMUTE (un hang se debloque alors a la cle suivante).
+#define VH_RP2040_DORMANT           0
 #define HUD_VIN                           // roomy: render the VIN on the idle page
 #endif
 
@@ -190,6 +207,9 @@
 // -----------------------------------------------------------------------------
 #ifndef VH_DEEP_SLEEP
 #define VH_DEEP_SLEEP               0
+#endif
+#ifndef VH_RP2040_DORMANT
+#define VH_RP2040_DORMANT           0
 #endif
 #ifndef VH_U8G2_BUFFER_MODE
 #define VH_U8G2_BUFFER_MODE         _2_

@@ -36,6 +36,9 @@ class Hudisplay128x64 : public Hudisplay {
   void _drawGearPosition(void);
   void _drawTrip(void);
   void _drawTank(void);
+  #if defined(VH_FEATURE_RF)
+  void _drawRfLabel(void);   // OPTIONAL rf-replay: selected .sub name in the fuel band
+  #endif
 
   // void _drawBootLogo(void); // if too long // drawXBM(x,y,w,h,arr)
 

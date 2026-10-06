@@ -28,6 +28,20 @@ The OLED and the MCP2515 share the SPI bus (SCK / MOSI / MISO); each has its own
 | OLED RESET | D4 |
 | MCP2515 INT | D2 |
 
+### Optional RF-replay add-on
+
+An optional module (enable with `-DVH_FEATURE_RF=1`, RP2040 "comfortable" tier) adds a **CC1101** OOK transmitter + **2 buttons** to replay garage-door `.sub` captures recorded on a Flipper Zero. Schematic: [`hardware/2d-models/rf-module-principle.svg`](./hardware/2d-models/rf-module-principle.svg) · operation: [`doc/SUBGHZ-FORMAT.md`](./doc/SUBGHZ-FORMAT.md).
+
+| Signal | RP2040 pin | Macro |
+|---|---|---|
+| CC1101 CS | GP13 | `VH_SPI_CS_RF` |
+| CC1101 GDO0 (OOK data) | GP12 | `VH_RF_GDO0` |
+| CC1101 SCK / SI / SO | GP2 / GP3 / GP4 | (shared SPI0) |
+| B1 — menu | GP6 | `VH_BTN_MENU` |
+| B2 — exec | GP7 | `VH_BTN_EXEC` |
+
+Buttons are **active-low to GND** (internal pull-up). The CC1101 is 3.3 V — on a 5 V board it needs level-shifting (see [`hardware/VARIANTS.md`](./hardware/VARIANTS.md)). Disabled by default → the baseline build is byte-identical.
+
 ## CAN exploration
 
 Signal discovery / reverse-engineering is done in the companion project **[discodb2](https://github.com/1e1/discodb2)** — a read-only (listen-only) toolkit that streams and decodes the bus from a laptop or Pi via a USB CAN adapter, with a zero-hardware simulator.

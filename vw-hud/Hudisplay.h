@@ -46,6 +46,11 @@ class Hudisplay {
     void switchOn(void);
     void switchOff(void);
     void setNightMode(const bool isNight);
+    #if defined(VH_FEATURE_RF)
+    // OPTIONAL rf-replay: name of the selected .sub to show in the fuel band
+    // (inverted). nullptr / "" => normal fuel gauge. Pushed by Workflow each loop.
+    void setRfLabel(const char* name) { this->_rfLabel = name; }
+    #endif
 
     #if defined(HUD_VIN)
     void setVin(const char* vin /* up to 17 chars, listen-only from muxed Ident 0x5D2 */);
@@ -100,6 +105,9 @@ class Hudisplay {
     virtual void _bootFrame(void) =0;   // 128x64 renders the starfield
 
     Page _page;
+    #if defined(VH_FEATURE_RF)
+    const char* _rfLabel = nullptr;     // .sub name shown in the fuel band (null = gauge)
+    #endif
     #if defined(HUD_VIN)
     char _vin[18] = {0};                // 17-char VIN + NUL; rendered on the idle page (V1)
     #endif

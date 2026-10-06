@@ -17,6 +17,7 @@ before the 3D model exists. Component specs: [`../README.md`](../README.md).
 |---|---|
 | [`connection-principle.svg`](./connection-principle.svg) | CAN wiring: car OBD-II → **thin 4-wire cable (no DB9)** → CANBed 4-pin terminal. 120 Ω OFF · +12V from pin 16 · OLED on SPI header (not GP9) · signals to verify with discodb2 |
 | [`mounting-principle.svg`](./mounting-principle.svg) | Side elevation: **cowl-lip hook + TPU foot** (no adhesive), panel **tilt + hood + matte bezel** for anti-reflection, low CG, 2-part removable, cable to OBD |
+| [`rf-module-principle.svg`](./rf-module-principle.svg) | **OPTIONAL rf-replay add-on** (purple dashed): CC1101 OOK transmitter + 2 buttons ↔ CANBed GPIO · `CSN=GP13` · `GDO0=GP12` (OOK bit-bang, orange) · SPI0 shared · `B1=GP6`/`B2=GP7` active-low · 3.3 V · λ/4 antenna outside · armed at standstill |
 
 ## Conventions
 
@@ -27,6 +28,7 @@ before the 3D model exists. Component specs: [`../README.md`](../README.md).
   - solid black outline = **confirmed** dimension (datasheet).
   - blue = active display area (OLED) · grey = connectors · dark = ICs.
   - **red dashed + `⟨?⟩` = TO MEASURE** with calipers before any 3D model.
+  - **purple dashed = OPTIONAL add-on** (rf-replay) — not part of the baseline build.
 - Internal component placement on the CANBed is **indicative** (traced from the
   product photo) — only the 56 × 41 mm outline is dimensioned by the source.
 

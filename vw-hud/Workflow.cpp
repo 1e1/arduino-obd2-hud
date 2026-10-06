@@ -19,6 +19,14 @@ void Workflow::setHudisplay(Hudisplay* display)
 }
 
 
+#if defined(VH_FEATURE_RF)
+void Workflow::setRfRemote(RfRemote* rf)
+{
+  this->_rf = rf;
+}
+#endif
+
+
 void Workflow::update(void)
 {
 shutdown:
@@ -289,6 +297,17 @@ void Workflow::_run(void) const
       page = wanted;
       this->_display->setPage(page);
     }
+
+    #if defined(VH_FEATURE_RF)
+    // OPTIONAL rf-replay: sample the add-on buttons each loop (B1 menu / B2 exec)
+    // and push the selected .sub name to the band when the view is FILE (else the
+    // fuel gauge). Only active when the user wired a RfRemote in setup().
+    if (this->_rf != nullptr) {
+      this->_rf->poll(Energy.realMillis());
+      this->_display->setRfLabel(this->_rf->view() == RfRemote::VIEW_FILE
+                                 ? this->_rf->selectedName() : nullptr);
+    }
+    #endif
 
     this->_display->requestAnimationFrame(Energy.realMillis());
   } while (true);

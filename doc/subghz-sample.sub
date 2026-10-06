@@ -1,0 +1,22 @@
+# SYNTHETIC SAMPLE — not a real remote. Opens nothing. Safe to commit.
+# Fully made-up timings that reproduce the Flipper .sub *structure* only.
+# Encodes a known test payload so it can double as a parser fixture
+# (see doc/SUBGHZ-FORMAT.md).
+#
+#   Modulation : OOK (on/off keying), like a real fixed-code remote
+#   Encoding   : PWM, base T = 350 us (deliberately != the ~250 us of real caps)
+#                bit '1' = 1050 ON , 350 OFF   (3T / 1T)
+#                bit '0' =  350 ON , 1050 OFF  (1T / 3T)
+#   Word       : 24 bits = 0xA5C3F0 = 1010 0101 1100 0011 1111 0000
+#   Sync/gap   : 350 ON , 10850 OFF  (1T / 31T) after each word
+#   Repeats    : the word is sent 3x (a real press sends ~8-10x)
+#
+# Lines 1-5 below are the real Flipper header fields (format-level, not secret).
+Filetype: Flipper SubGhz RAW File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: RAW
+RAW_Data: 1050 -350 350 -1050 1050 -350 350 -1050 350 -1050 1050 -350 350 -1050 1050 -350 1050 -350 1050 -350 350 -1050 350 -1050 350 -1050 350 -1050 1050 -350 1050 -350 1050 -350 1050 -350 1050 -350 1050 -350 350 -1050 350 -1050 350 -1050 350 -10850
+RAW_Data: 1050 -350 350 -1050 1050 -350 350 -1050 350 -1050 1050 -350 350 -1050 1050 -350 1050 -350 1050 -350 350 -1050 350 -1050 350 -1050 350 -1050 1050 -350 1050 -350 1050 -350 1050 -350 1050 -350 1050 -350 350 -1050 350 -1050 350 -1050 350 -10850
+RAW_Data: 1050 -350 350 -1050 1050 -350 350 -1050 350 -1050 1050 -350 350 -1050 1050 -350 1050 -350 1050 -350 350 -1050 350 -1050 350 -1050 350 -1050 1050 -350 1050 -350 1050 -350 1050 -350 1050 -350 1050 -350 350 -1050 350 -1050 350 -1050 350 -10850

@@ -658,6 +658,12 @@ void Hudisplay128x64::_drawTank(void)
         }
     }
 
+    #if defined(VH_FEATURE_RF)
+    // OPTIONAL rf-replay: when a .sub is selected, the band shows its name
+    // (inverted) instead of the gauge. Driven by Workflow from RfRemote::view().
+    this->_drawRfLabel();
+    #endif
+
     #if HUD_DISPLAY128X64_AREA_BLINK
     this->_board->setDrawColor(1); // 0, 1, 2=XOR
     if (HUD_DISPLAY128X64_AREA_BLINKING_ON) this->_board->drawFrame(0, _SCREEN_HEIGHT-_GAUGE_HEIGHT-3, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
@@ -666,6 +672,28 @@ void Hudisplay128x64::_drawTank(void)
     this->_board->updateDisplayArea(0, _SCREEN_HEIGHT-_GAUGE_HEIGHT-3, _SCREEN_WIDTH, _GAUGE_HEIGHT+3);
     #endif
 }
+
+
+#if defined(VH_FEATURE_RF)
+void Hudisplay128x64::_drawRfLabel(void)
+{
+    // nothing selected -> leave the fuel gauge as drawn
+    if (this->_rfLabel == nullptr || this->_rfLabel[0] == '\0') { return; }
+
+    const u8g2_uint_t y0 = _SCREEN_HEIGHT - _GAUGE_HEIGHT;   // 54: top of the band
+    this->_board->setFont(u8g2_font_profont12_tr);           // already linked (0 extra flash)
+    const u8g2_uint_t w = this->_board->getStrWidth(this->_rfLabel);
+    int16_t x = ((int16_t)_SCREEN_WIDTH - (int16_t)w) / 2;   // centred
+    if (x < 1) { x = 1; }
+
+    // inverted band: fill it lit, carve the text — legible over the gauge fill.
+    this->_board->setDrawColor(1);
+    this->_board->drawBox(0, y0, _SCREEN_WIDTH, _GAUGE_HEIGHT);
+    this->_board->setDrawColor(0);
+    this->_board->drawStr(x, _SCREEN_HEIGHT - 2, this->_rfLabel);  // baseline y=62
+    this->_board->setDrawColor(1);
+}
+#endif
 
 
 uint8_t Hudisplay128x64::_offsetLabel2(const uint8_t value, const uint8_t charWidth) {

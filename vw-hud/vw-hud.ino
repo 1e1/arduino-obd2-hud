@@ -11,6 +11,12 @@
 //#define VH_INPUT_STREAM
 #define VH_STREAM_SPEED 115200   // simulator baud (must match the web page)
 
+// OPTIONAL rf-replay add-on (doc/SUBGHZ-FORMAT.md): uncomment to enable, or build
+// with -DVH_FEATURE_RF=1. RP2040 "comfortable" tier only. Needs 2 buttons wired
+// active-low to GND (pins VH_BTN_* in _wiring.h). The bench backend prints each
+// "transmit" to Serial; phase 3 swaps in the real CC1101 emitter.
+//#define VH_FEATURE_RF 1
+
 #include "_wiring.h"
 #include "macro.h"
 
@@ -60,6 +66,19 @@ CarEventCanVwPq busCan;
 
 // Hudisplay — 128x64 OLED
 Hudisplay128x64 hud;
+
+#if defined(VH_FEATURE_RF)
+#if defined(VH_RF_CC1101)
+// Phase 3/4: real OOK emitter (CC1101) fed by the LittleFS .sub library.
+// .sub files are uploaded to LittleFS with the Arduino IDE LittleFS uploader.
+RfCc1101       rfRadio;
+RfLibrary      rfLib;
+RfRemoteCc1101 rfRemote;
+#else
+// Bench backend: prints the TX to Serial (no RF hardware). File scope: outlives setup().
+RfRemoteStream rfRemote;
+#endif
+#endif
 
 
 
@@ -130,6 +149,34 @@ void setup() {
     process.setHudisplay(&hudStream);
     */
   }
+  // =============================
+
+  // =============================
+  // RfRemote — OPTIONAL rf-replay add-on (buttons + .sub replay)
+  // =============================
+  #if defined(VH_FEATURE_RF)
+  {
+    rfRemote.setButtons(VH_BTN_MENU, VH_BTN_EXEC, VH_BTN_DEBOUNCE, VH_RF_LABEL_MS);
+    #if defined(VH_RF_CC1101)
+    // real emitter: init the CC1101 (OOK async) + load the .sub library from flash
+    rfRadio.setPins(VH_SPI_CS_RF, VH_RF_GDO0);
+    rfRadio.begin();
+    rfRadio.configOokAsyncTx();
+    rfLib.loadFromFs();                           // scan LittleFS for *.sub (phase 4)
+    rfRemote.setRadio(&rfRadio);
+    rfRemote.setLibrary(&rfLib);
+    rfRemote.setNames(rfLib.names(), rfLib.count());
+    #else
+    // bench backend: print the TX to Serial, static demo names
+    VH_SERIAL_PORT.begin(VH_SERIAL_SPEED);
+    rfRemote.setStream(VH_SERIAL_PORT);
+    static const char* const RF_PORTALS[] = { "portail1", "garage" };
+    rfRemote.setNames(RF_PORTALS, 2);             // names shown in the fuel band
+    #endif
+    rfRemote.begin();
+    process.setRfRemote(&rfRemote);
+  }
+  #endif
   // =============================
 }
 

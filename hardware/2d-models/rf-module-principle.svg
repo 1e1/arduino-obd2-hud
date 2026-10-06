@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 297 210" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerUnits="userSpaceOnUse" markerWidth="5" markerHeight="5" refX="4.2" refY="2.5" orient="auto">
+      <path d="M0,0 L5,2.5 L0,5 z" fill="#333"/>
+    </marker>
+    <style>
+      .box   { fill:#fafafa; stroke:#111; stroke-width:0.5; }
+      .opt   { fill:#fbfbfd; stroke:#5b3b8c; stroke-width:0.6; stroke-dasharray:2.2 1.6; }
+      .sub   { fill:#fff; stroke:#555; stroke-width:0.35; }
+      .ic    { fill:#eceaf4; stroke:#5b3b8c; stroke-width:0.5; }
+      .pin   { fill:#fff; stroke:#222; stroke-width:0.3; }
+      .spi   { stroke:#2c6fbb; stroke-width:0.8; fill:none; }
+      .data  { stroke:#e07b00; stroke-width:1.0; fill:none; }
+      .gnd   { stroke:#111;    stroke-width:0.9; fill:none; }
+      .v3    { stroke:#c0392b; stroke-width:0.9; fill:none; }
+      .btnw  { stroke:#333;    stroke-width:0.7; fill:none; }
+      .note  { fill:#fff8e1; stroke:#c79100; stroke-width:0.3; }
+      .optnote { fill:#f3effa; stroke:#5b3b8c; stroke-width:0.3; }
+      .t     { font-size:2.7px; fill:#111; }
+      .ts    { font-size:2.2px; fill:#333; }
+      .tw    { font-size:2.4px; font-weight:bold; }
+      .tp    { font-size:2.0px; fill:#111; font-family:monospace; }
+      .lbl   { font-size:3.2px; fill:#111; font-weight:bold; }
+      .title { font-size:5px; fill:#111; font-weight:bold; }
+      .warn  { font-size:2.4px; fill:#a33; }
+      .optlbl{ font-size:3px; fill:#5b3b8c; font-weight:bold; }
+    </style>
+  </defs>
+
+  <rect x="4" y="4" width="289" height="202" fill="none" stroke="#111" stroke-width="0.4"/>
+  <text x="10" y="14" class="title">CONSIGNE — Module RF optionnel (rejeu .sub) / RF-replay add-on wiring</text>
+  <text x="10" y="20" class="ts">CC1101 (OOK 433/868) + 2 boutons ↔ CANBed RP2040 · OPTIONNEL (VH_FEATURE_RF) · schéma de principe (non à l'échelle)</text>
+
+  <!-- optional envelope -->
+  <rect x="8" y="26" width="281" height="150" rx="2" class="opt"/>
+  <text x="12" y="31.5" class="optlbl">OPTIONNEL — se greffe sur le tier « comfortable » (RP2040). N'affecte pas la baseline.</text>
+
+  <!-- ===== CONTROLLER (CANBed GPIO) ===== -->
+  <text x="48" y="42" class="lbl" text-anchor="middle">CANBed RP2040 — GPIO libres</text>
+  <rect x="20" y="46" width="56" height="104" rx="1.5" class="sub"/>
+  <text x="48" y="52" class="ts" text-anchor="middle">3,3 V natif · SPI0 partagé</text>
+
+  <!-- pin stubs on the right edge (x=76) -->
+  <g>
+    <circle cx="76" cy="60"  r="1.4" class="pin"/><text x="73" y="60.8" class="tp" text-anchor="end">3V3</text>
+    <circle cx="76" cy="67"  r="1.4" class="pin"/><text x="73" y="67.8" class="tp" text-anchor="end">GND</text>
+    <circle cx="76" cy="80"  r="1.4" class="pin"/><text x="73" y="80.8" class="tp" text-anchor="end">GP2 SCK</text>
+    <circle cx="76" cy="87"  r="1.4" class="pin"/><text x="73" y="87.8" class="tp" text-anchor="end">GP3 SI</text>
+    <circle cx="76" cy="94"  r="1.4" class="pin"/><text x="73" y="94.8" class="tp" text-anchor="end">GP4 SO</text>
+    <circle cx="76" cy="107" r="1.4" class="pin"/><text x="73" y="107.8" class="tp" text-anchor="end">GP13 CS</text>
+    <circle cx="76" cy="114" r="1.4" class="pin"/><text x="73" y="114.8" class="tp" text-anchor="end">GP12 GDO0</text>
+    <circle cx="76" cy="130" r="1.4" class="pin"/><text x="73" y="130.8" class="tp" text-anchor="end">GP6  B1</text>
+    <circle cx="76" cy="137" r="1.4" class="pin"/><text x="73" y="137.8" class="tp" text-anchor="end">GP7  B2</text>
+  </g>
+  <text x="48" y="146" class="warn" text-anchor="middle">GP2/3/4/9/11 = CAN · GP14/15/17 = OLED (pris)</text>
+
+  <!-- ===== CC1101 module ===== -->
+  <text x="150" y="42" class="lbl" text-anchor="middle">CC1101 — émetteur OOK</text>
+  <rect x="130" y="46" width="40" height="64" rx="1.5" class="ic"/>
+  <text x="150" y="52" class="tw" text-anchor="middle" fill="#5b3b8c">CC1101</text>
+  <text x="150" y="56" class="ts" text-anchor="middle">même puce que le Flipper</text>
+  <!-- pins on left edge (x=130) -->
+  <g>
+    <circle cx="130" cy="60"  r="1.4" class="pin"/><text x="133" y="60.8" class="tp" text-anchor="start">VCC</text>
+    <circle cx="130" cy="67"  r="1.4" class="pin"/><text x="133" y="67.8" class="tp" text-anchor="start">GND</text>
+    <circle cx="130" cy="80"  r="1.4" class="pin"/><text x="133" y="80.8" class="tp" text-anchor="start">SCK</text>
+    <circle cx="130" cy="87"  r="1.4" class="pin"/><text x="133" y="87.8" class="tp" text-anchor="start">SI</text>
+    <circle cx="130" cy="94"  r="1.4" class="pin"/><text x="133" y="94.8" class="tp" text-anchor="start">SO</text>
+    <circle cx="130" cy="107" r="1.4" class="pin"/><text x="133" y="107.8" class="tp" text-anchor="start">CSN</text>
+  </g>
+  <!-- GDO0 + ANT on the right edge -->
+  <circle cx="170" cy="107" r="1.4" class="pin"/><text x="167" y="107.8" class="tp" text-anchor="end">GDO0</text>
+  <circle cx="170" cy="60"  r="1.4" class="pin"/><text x="167" y="56.5" class="tp" text-anchor="end">ANT</text>
+
+  <!-- ===== WIRES controller -> CC1101 ===== -->
+  <path class="v3"   marker-end="url(#ar)" d="M78,60 H128"/>
+  <path class="gnd"  marker-end="url(#ar)" d="M78,67 H128"/>
+  <path class="spi"  marker-end="url(#ar)" d="M78,80 H128"/>
+  <path class="spi"  marker-end="url(#ar)" d="M78,87 H128"/>
+  <path class="spi"  marker-end="url(#ar)" d="M78,94 H128"/>
+  <!-- CS GP13 -> CSN : route around under the IC -->
+  <path class="spi"  marker-end="url(#ar)" d="M78,107 C 100,107 104,107 115,107 S 122,107 128,107"/>
+  <!-- GDO0 GP12 -> GDO0 (right side) : route over the top -->
+  <path class="data" marker-end="url(#ar)" d="M78,114 C 96,114 100,124 112,124 C 150,124 150,124 178,124 C 184,124 184,112 178,110" />
+  <text x="150" y="129" class="t" fill="#e07b00" text-anchor="middle">GDO0 = ligne data OOK (bit-bang µs)</text>
+
+  <!-- ANT -->
+  <path class="btnw" d="M172,60 H196 L196,48"/>
+  <circle cx="196" cy="48" r="1" fill="#111"/>
+  <text x="200" y="52" class="t">antenne λ/4</text>
+  <text x="200" y="56" class="ts">17,3 cm @433 · 8,6 cm @868</text>
+  <text x="200" y="60" class="ts">sortie HORS boîtier</text>
+
+  <!-- ===== BUTTONS block ===== -->
+  <text x="235" y="80" class="lbl" text-anchor="middle">BOUTONS (à ajouter soi-même)</text>
+  <rect x="206" y="84" width="58" height="56" rx="1.5" class="sub"/>
+  <!-- B1 -->
+  <text x="212" y="94" class="tp" text-anchor="start">B1 · GP6</text>
+  <path class="btnw" d="M212,100 H224"/>
+  <path class="btnw" d="M232,100 H246"/>
+  <path class="btnw" d="M224,97 L224,103 M232,97 L232,103 M224,97 H232"/>
+  <path class="gnd" d="M246,100 H252 L252,132"/>
+  <!-- B2 -->
+  <text x="212" y="112" class="tp" text-anchor="start">B2 · GP7</text>
+  <path class="btnw" d="M212,118 H224"/>
+  <path class="btnw" d="M232,118 H246"/>
+  <path class="btnw" d="M224,115 L224,121 M232,115 L232,121 M224,115 H232"/>
+  <path class="gnd" d="M246,118 H252"/>
+  <!-- GND rail -->
+  <path class="gnd" d="M242,132 H258"/>
+  <text x="256" y="130" class="tp" text-anchor="end">GND</text>
+  <path class="gnd" d="M250,132 l-1.4,-2.2 M250,132 l1.4,-2.2"/>
+  <text x="235" y="138" class="ts" text-anchor="middle">actif-bas · pull-up interne</text>
+
+  <!-- ===== NOTES ===== -->
+  <g transform="translate(12,150)">
+    <rect x="0" y="0" width="150" height="52" class="optnote"/>
+    <text x="4" y="7" class="optlbl">RÈGLES / RULES</text>
+    <text x="4" y="14" class="t">① <tspan font-weight="bold">SPI0 partagé</tspan> MCP2515 + OLED + CC1101 ; chacun son CS.</text>
+    <text x="8" y="18.5" class="ts">En émission OOK async, le CC1101 ne touche PAS au SPI → bus libre.</text>
+    <text x="4" y="25.5" class="t">② <tspan font-weight="bold" fill="#e07b00">GDO0</tspan> = pilotée en µs (OOK). Déport PIO / cœur 1</text>
+    <text x="8" y="30" class="ts">→ l'OLED reste rafraîchi pendant le rejeu (RP2040). Sinon écran figé &lt;1 s.</text>
+    <text x="4" y="37" class="t">③ CC1101 en <tspan font-weight="bold">3,3 V</tspan> : direct sur RP2040 ; sur board 5 V</text>
+    <text x="8" y="41.5" class="ts">(Nano/Uno) → level-shift GDO0/SPI + alim 3,3 V (cf. piège MCP2515).</text>
+    <text x="4" y="48.5" class="t">④ Boutons <tspan font-weight="bold">armés à l'arrêt</tspan> (vitesse 0 + contact + frein à main).</text>
+  </g>
+
+  <!-- title block -->
+  <g transform="translate(222,168)">
+    <rect x="0" y="0" width="67" height="34" fill="none" stroke="#111" stroke-width="0.4"/>
+    <text x="3" y="7" class="lbl">VW HUD — RF add-on consigne</text>
+    <text x="3" y="14" class="ts">CC1101 (CSN=GP13, GDO0=GP12) + B1=GP6 / B2=GP7</text>
+    <text x="3" y="19" class="ts">OPTIONNEL · VH_FEATURE_RF · 3,3 V · OOK 433/868</text>
+    <text x="3" y="24" class="ts">File: hardware/2d-models/rf-module-principle.svg</text>
+    <text x="3" y="29" class="ts">Schematic — not to scale</text>
+  </g>
+</svg>

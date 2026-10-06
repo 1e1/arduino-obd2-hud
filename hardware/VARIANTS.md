@@ -88,6 +88,27 @@ transceiver**, nothing else.
 
 ---
 
+## C — Optional rf-replay add-on (comfortable tier, RP2040 recommended)
+
+Enable with `-DVH_FEATURE_RF=1`. Adds a **CC1101** OOK transmitter + **2 buttons**
+to replay garage-door `.sub` captures — see [`../doc/SUBGHZ-FORMAT.md`](../doc/SUBGHZ-FORMAT.md)
+and the schematic [`2d-models/rf-module-principle.svg`](./2d-models/rf-module-principle.svg).
+
+- **CC1101 module** (3.3 V): joins the shared SPI with its own `CS` (GP13 /
+  `VH_SPI_CS_RF`); the OOK data line `GDO0` (GP12 / `VH_RF_GDO0`) is bit-banged in
+  µs during emission. Add a **λ/4 antenna** (17.3 cm @433 MHz, 8.6 cm @868) routed
+  **outside** the enclosure.
+- **2 push-buttons** B1 (GP6 / `VH_BTN_MENU`) and B2 (GP7 / `VH_BTN_EXEC`),
+  **active-low to GND** (internal pull-up — debounced in `../vw-hud/_button.h`).
+- **⚠️ 3.3 V on a 5 V board** (Uno / Nano / Nano Every): power the CC1101 at 3.3 V
+  **and** level-shift `GDO0` + SPI — the same gotcha as the 5 V MCP2515 module in
+  section A. On RP2040 / SAMD21 / ESP32-C3 (3.3 V native) it is direct. The
+  **328P is excluded** (no RAM for the timing buffer).
+- **Display during emission**: the blocking OOK bit-bang lasts ~0.5–1 s. Only the
+  **RP2040** (PIO or 2nd core driving `GDO0`) keeps the OLED refreshed meanwhile;
+  other boards freeze the screen for that window — acceptable, since emission is
+  armed only at standstill (speed 0 + ignition + handbrake).
+
 ## Car interface (all builds)
 
 Tap the **OBD-II** port (under the dash) — least intrusive, gives power + bus in
@@ -125,3 +146,5 @@ one connector:
   12 V→5 V buck · 12 V protection · OBD-II cable.
 - **XIAO ESP32-C3**: 3.3 V CAN transceiver (SN65HVD230 / TJA1051T/3) · 12 V→5 V
   buck · 12 V protection · OBD-II cable.
+- **Optional rf-replay add-on** (any comfortable board): CC1101 3.3 V module · λ/4
+  antenna · 2 push-buttons · (on a 5 V board: level shifter + 3.3 V feed for the CC1101).

@@ -5,6 +5,9 @@
 #include "CarEvent.h"
 #include "Hudisplay.h"
 #include "PowerManager.h"
+#if defined(VH_FEATURE_RF)
+#include "RfRemote.h"   // OPTIONAL rf-replay add-on (compiled only under the flag)
+#endif
 
 
 /**
@@ -31,6 +34,9 @@ class Workflow {
 
   void setCarEvent(CarEvent* bus);
   void setHudisplay(Hudisplay* display);
+  #if defined(VH_FEATURE_RF)
+  void setRfRemote(RfRemote* rf);   // optional rf-replay add-on
+  #endif
 
   void update(void);
 
@@ -48,6 +54,9 @@ class Workflow {
 
   CarEvent* _bus = nullptr;
   Hudisplay* _display = nullptr;
+  #if defined(VH_FEATURE_RF)
+  RfRemote* _rf = nullptr;           // optional; polled in _run() when present
+  #endif
 
 };
 

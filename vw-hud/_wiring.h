@@ -240,4 +240,42 @@
   VH_U8G2_JOIN(U8G2_SSD1309_128X64_NONAME0, VH_U8G2_BUFFER_MODE, 4W_HW_SPI)
 
 
+// =============================================================================
+// OPTIONAL rf-replay add-on (doc/SUBGHZ-FORMAT.md). DISABLED by default.
+// Enable with -DVH_FEATURE_RF=1 (CI), or `#define VH_FEATURE_RF 1` before the
+// _wiring.h include in vw-hud.ino. Recommended on the "comfortable" tier
+// (RP2040); the 328P has no RAM for the timing buffer -> excluded.
+//
+// BUTTONS — "add them yourself", hence every pin/constant below is OVERRIDABLE
+// (define it with -D before this header wins over the default). Wire each button
+// ACTIVE-LOW between the pin and GND, and let the internal pull-up hold the idle
+// level: GND is the stable reference, so a press is a hard pull to 0 V — immune
+// to VCC droop / ground shift on a long deported wire in the car. The software
+// integrator debounce (vw-hud/_button.h) then rejects contact bounce AND the
+// near-threshold chatter that voltage variation causes. Pins are bench-guess on
+// free RP2040 GPIO (GP2/3/4/9/11 = CAN, GP14/15/17 = OLED are taken) — verify.
+// =============================================================================
+#ifdef VH_FEATURE_RF
+#ifndef VH_BTN_MENU
+#define VH_BTN_MENU             6    // B1 — menu: gauge -> show selected .sub ; .sub -> next
+#endif
+#ifndef VH_BTN_EXEC
+#define VH_BTN_EXEC             7    // B2 — exec: show selected + replay instantly
+#endif
+#ifndef VH_BTN_DEBOUNCE
+#define VH_BTN_DEBOUNCE         4    // integrator depth (samples) = hysteresis width
+#endif
+#ifndef VH_RF_LABEL_MS
+#define VH_RF_LABEL_MS       4096    // inactivity timeout: .sub label -> back to fuel gauge
+#endif
+// --- CC1101 transmitter (phase 3; declared here so the pinout stays in one place)
+#ifndef VH_SPI_CS_RF
+#define VH_SPI_CS_RF           13    // CC1101 chip-select (3rd SPI client)
+#endif
+#ifndef VH_RF_GDO0
+#define VH_RF_GDO0             12    // CC1101 GDO0 — OOK bit-bang TX line
+#endif
+#endif // VH_FEATURE_RF
+
+
 #endif
